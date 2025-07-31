@@ -60,7 +60,7 @@ abstract class ServiceBase implements Service, ServiceDBEvent
             for ($i = 0; $i < $args; $i++) {
                 ${'arg_' . $i} = $arguments[$i] ?? null;
             }
-            return $this->repository->$name($arg_0 ?? null, $arg_1 ?? null, $arg_2 ?? null, $arg_3 ?? null, $arg_4 ?? null);
+            return $this->repository->$name($arg_0 ?? null, $arg_1 ?? null, $arg_2 ?? null, $arg_3 ?? null, $arg_4 ?? null, $arg_5 ?? null, $arg_6 ?? null, $arg_7 ?? null, $arg_8 ?? null, $arg_9 ?? null);
         } else {
             throw new \Exception('Método não existe no service ou repository.', 500);
         }
