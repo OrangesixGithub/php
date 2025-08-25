@@ -7,7 +7,7 @@ if (!function_exists('EnumToArray')) {
      * @param string|null $type
      * @return array
      */
-    function EnumToArray(array $enum, string $type = null): array
+    function EnumToArray(array $enum, ?string $type = null): array
     {
         $types = [];
         foreach ($enum as $key => $item) {
@@ -114,10 +114,10 @@ if (!function_exists('FilterData')) {
      * @throws Exception
      */
     function FilterData(
-        string $value,
-        string $type = 'date' | 'text' | 'id',
-        string $return = 'SQL' | 'DATA',
-        string $field = null
+        string  $value,
+        string  $type = 'date' | 'text' | 'id',
+        string  $return = 'SQL' | 'DATA',
+        ?string $field = null
     ): string|array|null
     {
         $data = ['<=', '>=', '<', '>', '{}', '!=', '!%', '%', '='];
