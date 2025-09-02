@@ -12,6 +12,12 @@ interface Repository
     public function getModel(): Model;
 
     /**
+     * @param mixed $paramns
+     * @return mixed
+     */
+    public function find(mixed ...$paramns): mixed;
+
+    /**
      * @param array $data
      * @return int
      */
@@ -22,10 +28,4 @@ interface Repository
      * @return void
      */
     public function remove(int $id): void;
-
-    /**
-     * @param int $id
-     * @return mixed
-     */
-    public function find(int $id): mixed;
 }

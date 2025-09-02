@@ -1,6 +1,6 @@
 <?php
 
-namespace Orangesix\Date;
+namespace Orangesix\Utils\Date;
 
 class Time
 {
@@ -56,7 +56,7 @@ class Time
             $diff = $date_fim->diff($date_start);
             if ($diff->invert == 0 && $diff->h > 0) {
                 $date_start->add(\DateInterval::createFromDateString('+1day'));
-                $date_start = new \DateTime($date_start->format('Y-m-d') . ' ' .  $this->exp_inicio);
+                $date_start = new \DateTime($date_start->format('Y-m-d') . ' ' . $this->exp_inicio);
                 $date_start->add(\DateInterval::createFromDateString("+{$diff->h}hours"));
             }
             return $date_start;

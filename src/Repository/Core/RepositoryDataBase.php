@@ -41,11 +41,12 @@ trait RepositoryDataBase
     }
 
     /**
-     * @param int $id
+     * @param mixed ...$paramns
      * @return mixed
      */
-    public function find(int $id): mixed
+    public function find(mixed ...$paramns): mixed
     {
+        $id = is_int($paramns[0]) ? $paramns[0] : 0;
         return $this->model::findOrFail($id);
     }
 }

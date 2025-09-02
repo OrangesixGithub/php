@@ -74,12 +74,12 @@ abstract class ServiceBase implements Service
     }
 
     /**
-     * @param int $id
+     * @param mixed $paramns
      * @return mixed
      */
-    public function find(int $id, ...$paramns): mixed
+    public function find(mixed ...$paramns): mixed
     {
-        return $this->repository->find($id, ...$paramns);
+        return $this->repository->find(...$paramns);
     }
 
     /**
@@ -91,7 +91,11 @@ abstract class ServiceBase implements Service
         if (method_exists($request, 'validated')) {
             $data = $request->validated();
         } else {
-            $data = $request->validate($this->validated);
+            if (!empty($this->validated)) {
+                $data = $request->validate($this->validated);
+            } else {
+                $data = $request->all();
+            }
         }
         try {
             DB::beginTransaction();

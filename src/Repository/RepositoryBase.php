@@ -33,9 +33,6 @@ abstract class RepositoryBase implements Repository
      */
     public function __get(string $name)
     {
-        if (str_contains($name, 'service')) {
-            return $this->instanceAutoService($name);
-        }
-        return $this->instanceAutoModel($name);
+        return $this->instanceAutoService($name);
     }
 }
