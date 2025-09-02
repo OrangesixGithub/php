@@ -3,7 +3,7 @@
 namespace Orangesix\Exceptions;
 
 use Illuminate\Http\JsonResponse;
-use Orangesix\Service\Response\Enum\Message as MessageEnum;
+use Orangesix\Enum\Response\Message as MessageEnum;
 
 class Message extends \Exception
 {

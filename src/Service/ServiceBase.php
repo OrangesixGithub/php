@@ -6,44 +6,45 @@ use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Orangesix\Repository\Repository;
-use Orangesix\Repository\RepositoryAutoInstance;
+use Orangesix\Repository\Core\RepositoryAutoInstance;
+use Orangesix\Repository\Contract\Repository;
+use Orangesix\Repository\RepositoryBase;
+use Orangesix\Service\Contract\Service;
+use Orangesix\Service\Core\ServiceAutoInstance;
+use Orangesix\Service\Core\ServiceDataBaseEvent;
 use Orangesix\Service\Response\ServiceResponse;
 
-abstract class ServiceBase implements Service, ServiceDBEvent
+/**
+ * @property RepositoryBase $repository
+ */
+abstract class ServiceBase implements Service
 {
-    use ServiceDataBase;
     use ServiceAutoInstance;
+    use ServiceDataBaseEvent;
     use RepositoryAutoInstance;
-
-    /** @var Repository | null */
-    protected ?Repository $repository;
 
     /** @var ServiceResponse */
     protected ServiceResponse $response;
 
-    /** @var array */
-    private ?array $autoInstance;
-
     /**
-     * @var array
-     */
-    private array $validation = [];
-
-    /**
-     * @var array
-     */
-    private array $validationData = [];
-
-    /**
-     * @param Repository $repository
      * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
-    public function __construct(?Repository $repository = null, ?array $autoInstance = null)
-    {
-        $this->repository = $repository;
+    public function __construct(
+        protected ?Repository $repository = null,
+        private array         $validated = []
+    ) {
         $this->response = app()->make(ServiceResponse::class);
-        $this->autoInstance = $autoInstance;
+        $this->repository = empty($this->repository) ? $this->getClassRepositoryAuto() : $this->repository;
+    }
+
+    /**
+     * @param string $name
+     * @return mixed
+     * @throws BindingResolutionException
+     */
+    public function __get(string $name)
+    {
+        return $this->instanceAutoService($name);
     }
 
     /**
@@ -56,36 +57,13 @@ abstract class ServiceBase implements Service, ServiceDBEvent
     {
         if (method_exists($this->repository, $name)) {
             $reflection = new \ReflectionMethod($this->repository, $name);
-            $args = $reflection->getNumberOfParameters();
-            for ($i = 0; $i < $args; $i++) {
-                ${'arg_' . $i} = $arguments[$i] ?? null;
-            }
-            return $this->repository->$name($arg_0 ?? null, $arg_1 ?? null, $arg_2 ?? null, $arg_3 ?? null, $arg_4 ?? null, $arg_5 ?? null, $arg_6 ?? null, $arg_7 ?? null, $arg_8 ?? null, $arg_9 ?? null);
+            $parameters = array_pad($arguments, $reflection->getNumberOfParameters(), null);
+
+            return $this->repository->$name(...$parameters);
         } else {
-            throw new \Exception('Método não existe no service ou repository.', 500);
+            throw new \BadMethodCallException('Método não existe no service ou repository.', 500);
         }
     }
-
-    /**
-     * @param string $name
-     * @return mixed
-     * @throws BindingResolutionException
-     */
-    public function __get(string $name)
-    {
-        if (strpos($name, 'service') !== false) {
-            return $this->instanceAutoService($name, $this->autoInstance['service'] ?? null);
-        }
-        return $this->instanceAutoRepository($name, $this->autoInstance['repository'] ?? null);
-    }
-
-    /*
-    |--------------------------------------------------------
-    | interface - Service
-    |--------------------------------------------------------
-    | Implementação dos métodos da interface
-    |
-    */
 
     /**
      * @return Model
@@ -96,7 +74,6 @@ abstract class ServiceBase implements Service, ServiceDBEvent
     }
 
     /**
-     * Realiza a pesquisa do modelo
      * @param int $id
      * @return mixed
      */
@@ -106,23 +83,29 @@ abstract class ServiceBase implements Service, ServiceDBEvent
     }
 
     /**
-     * Realiza o cadastro ou atualização dos dados
      * @param Request $request
      * @return mixed
      */
     public function manager(Request $request): mixed
     {
-        if (method_exists($request, 'getData')) {
-            $data = $request->getData();
+        if (method_exists($request, 'validated')) {
+            $data = $request->validated();
         } else {
-            $data = $this->validated($request);
+            $data = $request->validate($this->validated);
         }
-
         try {
             DB::beginTransaction();
-            $this->beforeManager($request, $data);
+
+            if ($this->beforeManager instanceof \Closure) {
+                ($this->beforeManager)($data);
+            }
+
             $id = $this->repository->save($data);
-            $this->afterManager($request, $data);
+
+            if ($this->afterManager instanceof \Closure) {
+                ($this->afterManager)(array_merge($data, ['id' => $id]));
+            }
+
             DB::commit();
             return $id;
         } catch (\Exception $exception) {
@@ -138,7 +121,6 @@ abstract class ServiceBase implements Service, ServiceDBEvent
     }
 
     /**
-     * Realiza a exclusão dos dados
      * @param Request $request
      * @return void
      */
@@ -146,9 +128,17 @@ abstract class ServiceBase implements Service, ServiceDBEvent
     {
         try {
             DB::beginTransaction();
-            $this->beforeDelete($request);
+
+            if ($this->beforeDelete instanceof \Closure) {
+                ($this->beforeDelete)($request->all());
+            }
+
             $this->repository->remove($request->id);
-            $this->afterDelete($request);
+
+            if ($this->afterDelete instanceof \Closure) {
+                ($this->afterDelete)($request->all());
+            }
+
             DB::commit();
         } catch (\Exception $exception) {
             DB::rollBack();
@@ -163,71 +153,12 @@ abstract class ServiceBase implements Service, ServiceDBEvent
     }
 
     /**
-     * Realiza a validação dos dados - OVERRIDE
-     * @param Request $request
-     * @return array
-     */
-    public function validated(Request $request): array
-    {
-        $data = $request->validate($this->validation);
-
-        return array_merge($data, $this->validationData);
-    }
-
-    /**
-     * @param array $validation
-     * @param array $data
+     * @param array $validated
      * @return $this
      */
-    public function setValidated(array $validation, array $data = []): self
+    public function setValidated(array $validated): self
     {
-        $this->validation = $validation;
-        $this->validationData = $data;
-
+        $this->validated = $validated;
         return $this;
-    }
-
-    /*
-    |--------------------------------------------------------
-    | interface - ServiceDBEvent
-    |--------------------------------------------------------
-    | Implementação dos métodos da interface
-    |
-    */
-
-    /**
-     * Executa método antes do manager ser executado - OVERRIDE
-     * @param ...$paramns
-     * @return void
-     */
-    public function beforeManager(...$paramns): void
-    {
-    }
-
-    /**
-     * Executa método depois do manager ser executado - OVERRIDE
-     * @param ...$paramns
-     * @return void
-     */
-    public function afterManager(...$paramns): void
-    {
-    }
-
-    /**
-     * Executa método antes do delete ser executado - OVERRIDE
-     * @param ...$paramns
-     * @return void
-     */
-    public function beforeDelete(...$paramns): void
-    {
-    }
-
-    /**
-     * Executa método depois do delete ser executado - OVERRIDE
-     * @param ...$paramns
-     * @return void
-     */
-    public function afterDelete(...$paramns): void
-    {
     }
 }

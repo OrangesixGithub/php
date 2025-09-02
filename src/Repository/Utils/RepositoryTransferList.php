@@ -1,23 +1,26 @@
 <?php
 
-namespace Orangesix\Repository;
+namespace Orangesix\Repository\Utils;
 
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Orangesix\Repository\RepositoryBase;
 
 trait RepositoryTransferList
 {
-    /** @var Model  */
+    /** @var Model */
     private Model $transferList;
 
-    /** @var array  */
+    /** @var array */
     private array $keys;
 
     /**
      * Realiza a parametrização do transferList
+     * @throws BindingResolutionException
      */
-    public function transferList(string $model, array $keys = []): Repository
+    public function transferList(string $model, array $keys = []): RepositoryBase
     {
         $this->transferList = app()->make($model);
         $this->keys = $keys;

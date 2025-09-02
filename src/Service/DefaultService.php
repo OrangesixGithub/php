@@ -5,7 +5,7 @@ namespace Orangesix\Service;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Http\Request;
 use Orangesix\Repository\DefaultRepository;
-use Orangesix\Repository\Repository;
+use Orangesix\Repository\Contract\Repository;
 
 /**
  * Service - DEFAULT

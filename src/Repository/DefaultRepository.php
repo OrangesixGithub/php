@@ -11,10 +11,8 @@ use Illuminate\Database\Eloquent\Collection;
 /**
  * Repository - DEFAULT
  */
-class DefaultRepository implements Repository
+class DefaultRepository extends RepositoryBase
 {
-    use RepositoryDataBase;
-
     /**
      * @var array
      */

@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Orangesix\Acl\Model\PermissoesModel;
 use Orangesix\Acl\Model\PermissoesUsuarioModel;
-use Orangesix\Repository\Repository;
-use Orangesix\Repository\RepositoryDataBase;
+use Orangesix\Repository\Contract\Repository;
+use Orangesix\Repository\Core\RepositoryDataBase;
 
 /**
  * Repository - Permissões Usuário Acl

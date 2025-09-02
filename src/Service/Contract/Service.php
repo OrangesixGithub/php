@@ -1,6 +1,6 @@
 <?php
 
-namespace Orangesix\Service;
+namespace Orangesix\Service\Contract;
 
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Model;
@@ -31,15 +31,9 @@ interface Service
     public function delete(Request $request): void;
 
     /**
-     * @param Request $request
-     * @return array
-     */
-    public function validated(Request $request): array;
-
-    /**
      * @param array $validation
      * @param array $data
      * @return self
      */
-    public function setValidated(array $validation, array $data = []): self;
+    public function setValidated(array $validated): self;
 }

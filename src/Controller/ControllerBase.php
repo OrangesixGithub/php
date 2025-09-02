@@ -4,7 +4,7 @@ namespace Orangesix\Controller;
 
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Routing\Controller;
-use Orangesix\Service\ServiceAutoInstance;
+use Orangesix\Service\Core\ServiceAutoInstance;
 use Orangesix\Service\Response\ServiceResponse;
 
 abstract class ControllerBase extends Controller
@@ -13,16 +13,12 @@ abstract class ControllerBase extends Controller
 
     protected ServiceResponse $response;
 
-    /** @var array  */
-    private ?array $autoInstance;
-
     /**
      * @throws BindingResolutionException
      */
-    public function __construct(?array $autoInstance = null)
+    public function __construct()
     {
         $this->response = app()->make(ServiceResponse::class);
-        $this->autoInstance = $autoInstance;
     }
 
     /**
@@ -32,6 +28,6 @@ abstract class ControllerBase extends Controller
      */
     public function __get(string $name)
     {
-        return $this->instanceAutoService($name, $this->autoInstance['service'] ?? null);
+        return $this->instanceAutoService($name);
     }
 }

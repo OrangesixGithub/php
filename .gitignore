@@ -1,6 +1,4 @@
 .idea
 vendor
+laravel
 composer.lock
-example
-/src/sync.ffs_db
-/index.php

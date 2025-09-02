@@ -2,29 +2,15 @@
 
 namespace Orangesix\Service\Response;
 
-use Orangesix\Service\Response\Enum\Message as MessageEnum;
+use Orangesix\Enum\Response\Message as MessageEnum;
 
 class Message
 {
-    /** @var string */
-    public string $message;
-
-    /** @var string|MessageEnum */
-    public string|MessageEnum $type;
-
-    /** @var string|null */
-    public ?string $icon;
-
-    /**
-     * @param string $message
-     * @param MessageEnum $type
-     * @param string|null $icon
-     */
-    public function __construct(string $message, MessageEnum $type = MessageEnum::Success, string $icon = null)
-    {
-        $this->message = $message;
-        $this->type = $type;
-        $this->icon = $icon;
+    public function __construct(
+        public string      $message,
+        public MessageEnum $type = MessageEnum::Success,
+        public ?string     $icon = null
+    ) {
         if (empty($icon)) {
             $this->icon = match ($type) {
                 MessageEnum::Error => 'bi bi-bug',

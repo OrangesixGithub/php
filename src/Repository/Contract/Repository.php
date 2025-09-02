@@ -1,6 +1,6 @@
 <?php
 
-namespace Orangesix\Repository;
+namespace Orangesix\Repository\Contract;
 
 use Illuminate\Database\Eloquent\Model;
 

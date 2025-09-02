@@ -4,8 +4,8 @@ namespace Orangesix\Acl\Repository;
 
 use Illuminate\Database\Eloquent\Collection;
 use Orangesix\Acl\Model\PerfilModel;
-use Orangesix\Repository\Repository;
-use Orangesix\Repository\RepositoryDataBase;
+use Orangesix\Repository\Contract\Repository;
+use Orangesix\Repository\Core\RepositoryDataBase;
 
 /**
  * Repository - Perfil Acl

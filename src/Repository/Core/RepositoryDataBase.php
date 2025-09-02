@@ -1,38 +1,11 @@
 <?php
 
-namespace Orangesix\Repository;
+namespace Orangesix\Repository\Core;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Contracts\Container\BindingResolutionException;
-use Orangesix\Models\ModelAutoInstance;
-use Orangesix\Service\ServiceAutoInstance;
-use Orangesix\Repository\Utils\RepositoryFilter;
 
 trait RepositoryDataBase
 {
-    use RepositoryFilter;
-    use ModelAutoInstance;
-    use ServiceAutoInstance;
-    use RepositoryTransferList;
-
-    /**
-     * @var array|null
-     */
-    private ?array $autoInstance;
-
-    /**
-     * @param string $name
-     * @return mixed
-     * @throws BindingResolutionException
-     */
-    public function __get(string $name)
-    {
-        if (strpos($name, 'service') !== false) {
-            return $this->instanceAutoService($name, $this->autoInstance['service'] ?? null);
-        }
-        return $this->instanceAutoModel($name, $this->autoInstance['model'] ?? null);
-    }
-
     /**
      * @return Model
      */

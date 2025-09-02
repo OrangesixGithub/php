@@ -3,11 +3,11 @@
 namespace Orangesix\Service\Response;
 
 use Orangesix\Exceptions\Field;
-use Orangesix\Service\Response\Enum\Message;
+use Orangesix\Enum\Response\Message;
 
 class ServiceResponse
 {
-    /** @var Response  */
+    /** @var Response */
     private Response $return;
 
     /**
@@ -18,7 +18,7 @@ class ServiceResponse
      * @return void
      * @throws Field
      */
-    public function responseField(string $field, array | string $message, int $code = 422): void
+    public function responseField(string $field, array|string $message, int $code = 422): void
     {
         if (gettype($field) == 'string') {
             $message = [$message];
@@ -62,6 +62,6 @@ class ServiceResponse
      */
     public function response(): string
     {
-        return collect((array) $this->return)->toJson();
+        return collect((array)$this->return)->toJson();
     }
 }

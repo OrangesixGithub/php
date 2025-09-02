@@ -1,6 +1,6 @@
 {
   "name": "orangesix/php",
-  "description": "Set of components and functions available to be used in a PHP project.",
+  "description": "Biblioteca de funções utilizadas no desenvolvimento de projetos PHP com Laravel.",
   "keywords": [
     "Orangesix",
     "Laravel"
@@ -28,10 +28,9 @@
   ],
   "minimum-stability": "stable",
   "require": {
-    "php": "^8.1"
+    "php": "^8.3"
   },
   "require-dev": {
-    "laravel/pint": "^1.13",
-    "laravel/framework": "^v10.00"
+    "laravel/pint": "^1.13"
   }
 }

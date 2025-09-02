@@ -1,6 +1,6 @@
 <?php
 
-namespace Orangesix\Service\Response\Enum;
+namespace Orangesix\Enum\Response;
 
 enum Message: string
 {
