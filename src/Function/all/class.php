@@ -37,6 +37,10 @@ if (!function_exists('getNamespace')) {
      */
     function getNamespace(string $filePath): ?string
     {
+        if (!is_file($filePath)) {
+            return null;
+        }
+
         $content = file_get_contents($filePath);
         $namespaceRegex = '/namespace\s+([^\s;]+)/i';
         if (preg_match($namespaceRegex, $content, $matches)) {
