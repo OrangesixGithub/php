@@ -53,7 +53,9 @@ jobs:
               .map(issue => `#${issue.number} - ${issue.title}`)
               .join('\n');
             
-            return `Release in this version:\n\n${issuesList}`;
+            return `Release in this version: 
+            
+            ${issuesList}`;
 
       # Realiza a criação do release
       - name: Create Release
