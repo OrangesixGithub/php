@@ -7,7 +7,7 @@ on:
 
 jobs:
   test:
-    uses: ./.github/workflows/commit.yml@master
+    uses: ./.github/workflows/commit.yml
 
   generate-release:
     runs-on: ubuntu-latest
