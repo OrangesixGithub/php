@@ -1,101 +1,24 @@
 <?php
 
-if (!function_exists('EnumToArray')) {
-    /**
-     * Utilitário para converter um enumerador (enum) em um array associativo com diferentes formatos.
-     * @param array $enum
-     * @param string|null $type
-     * @return array
-     */
-    function EnumToArray(array $enum, ?string $type = null): array
-    {
-        $types = [];
-        foreach ($enum as $key => $item) {
-            if (empty($type)) {
-                $types[] = $item;
-            } elseif ($type === 'select') {
-                $types[$key]['id'] = $item;
-                $types[$key]['name'] = $item;
-            } elseif ($type === 'radio') {
-                $types[$key]['value'] = $item;
-                $types[$key]['legend'] = $item;
-            }
-        }
-        return $types;
-    }
-}
-
-if (!function_exists('BuildTree')) {
-    /**
-     * Realiza a montagem da estrutura de dados para componente TreeList
-     * @param array $enum
-     * @param string|null $type
-     * @return array
-     */
-    function BuildTree(array $data): array
-    {
-        $nodes = [];
-        foreach ($data as $item) {
-            $nodes[$item['id']] = $item;
-        }
-        $array = [];
-        foreach ($data as $item) {
-            if (isset($nodes[$item['parent']])) {
-                $parentNode = &$nodes[$item['parent']];
-                if (!isset($parentNode['children'])) {
-                    $parentNode['children'] = [];
-                }
-                $parentNode['children'][] = &$nodes[$item['id']];
-            } else {
-                $array[] = &$nodes[$item['id']];
-            }
-        }
-        return $array;
-    }
-}
-
-if (!function_exists('BuildTreeExists')) {
-    /**
-     * Realiza a montagem da árvore de dados somente com os dados selecionáveis
-     * @param array $data
-     * @return array
-     */
-    function BuildTreeExists(array $data): array
-    {
-        $i = 0;
-        while (count($data) > 0 && $i < count($data)) {
-            $search = array_search($data[$i]['id'], array_column($data, 'parent'));
-            if (!$search && !$data[$i]['selected']) {
-                unset($data[$i]);
-                $data = array_values($data);
-                $i = 0;
-            } else {
-                $i++;
-            }
-        }
-        return array_values($data);
-    }
-}
-
-if (!function_exists('Mask')) {
+if (!function_exists('mask')) {
     /**
      * Utilizada para aplicar uma máscara a um determinado valor.
      * @param string $value
      * @param string $mask
      * @return string
      */
-    function Mask(string $value, string $mask): string
+    function mask(string $value, string $mask): string
     {
         $maskared = '';
         $k = 0;
         for ($i = 0; $i <= strlen($mask) - 1; ++$i) {
-            if ($mask[$i] == '#') {
+            if ($mask[$i] == '#' || (strlen($value) == strlen(str_replace([' ', '-', '.', '/', '(', ')'], '', $mask)) && $mask[$i] == '?')) {
                 if (isset($value[$k])) {
                     $maskared .= $value[$k++];
                 }
             } else {
                 if (isset($mask[$i])) {
-                    $maskared .= $mask[$i];
+                    $maskared .= str_replace('?', '', $mask[$i]);
                 }
             }
         }
@@ -103,7 +26,7 @@ if (!function_exists('Mask')) {
     }
 }
 
-if (!function_exists('FilterData')) {
+if (!function_exists('filterData')) {
     /**
      * Realiza o tratamento dos dados para ser utilizado em filtro de pesquisa
      * @param string $value
@@ -113,13 +36,12 @@ if (!function_exists('FilterData')) {
      * @return string|array|null
      * @throws Exception
      */
-    function FilterData(
+    function filterData(
         string  $value,
         string  $type = 'date' | 'text' | 'id',
         string  $return = 'SQL' | 'DATA',
         ?string $field = null
-    ): string|array|null
-    {
+    ): string|array|null {
         $data = ['<=', '>=', '<', '>', '{}', '!=', '!%', '%', '='];
         $operation = '';
         foreach ($data as $op) {
@@ -129,7 +51,10 @@ if (!function_exists('FilterData')) {
             }
         }
 
-        if (!strpos($value, $operation)) {
+        if (is_bool(strpos($value, $operation)) || empty($operation)) {
+            if (empty($value)) {
+                return null;
+            }
             throw new Exception('É necesário informar os operadores ' . implode(', ', $data) . " na string '$value'.", 400);
         }
         $values = explode($operation, $value);
@@ -169,9 +94,7 @@ if (!function_exists('FilterData')) {
             }
 
             if ($return == 'SQL') {
-                $operation = $operation == '!%'
-                    ? '!='
-                    : ($operation == '%' ? '=' : $operation);
+                $operation = $operation == '!%' ? '!=' : ($operation == '%' ? '=' : $operation);
 
                 if (isset($values[1]) && $operation == '{}') {
                     return "{$field} BETWEEN '" . $formateDate($values[0]) . "' AND '" . $formateDate($values[1], true) . "'";
@@ -180,7 +103,7 @@ if (!function_exists('FilterData')) {
                 $operation = $operation == '{}' ? '=' : $operation;
                 $date = array_map('intval', explode('-', $values[0]));
                 $date = array_map(function ($item) {
-                    return empty($item) ? 0 : str_pad($item, 2, "0", STR_PAD_LEFT);
+                    return empty($item) ? 0 : str_pad($item, 2, '0', STR_PAD_LEFT);
                 }, $date);
 
                 //Individual
@@ -223,34 +146,29 @@ if (!function_exists('FilterData')) {
                     return "{$field} {$operation} '{$date[0]}-{$date[1]}-{$date[2]}'";
                 }
             }
-
             return null;
         }
 
-        if ($type == 'text') {
-            if ($return == 'DATA') {
-                return [trim($values[0]), trim($values[1]) ?? null, $op];
+        if ($type == 'text' && $return == 'SQL') {
+            if ($operation == '{}') {
+                throw new Exception("Não é possível utilizar intervalo de dados em tipo 'TEXT'.", 400);
             }
-
-            if ($return == 'SQL') {
-                if (isset($values[1]) && $operation == '{}') {
-                    throw new Exception("Não é possível utilizar intervalo de dados em tipo 'TEXT'.", 400);
-                }
-                return "{$field} {$op} '" . ($qy . $values[0] . $qy) . "'";
-            }
+            return "{$field} {$op} '" . ($qy . $values[0] . $qy) . "'";
         }
 
-        if ($type == 'id' && ($op == '=' || $op == '!=')) {
-            $id = array_map('intval', explode(';', $values[0]));
-            if ($return == 'DATA') {
-                return [$id, $op];
-            }
-            if ($return == 'SQL') {
+        if ($type == 'id' && $return == 'SQL') {
+            if (($op == '=' || $op == '!=')) {
+                $id = array_map('intval', explode(';', $values[0]));
                 $in = implode(',', $id);
                 return "{$field} " . ($op == '=' ? 'IN (' : 'NOT IN (') . "{$in})";
+            } else {
+                throw new Exception("Não é possível utilizar este operador para o tipo 'ID'.", 400);
             }
         }
 
+        if ($return == 'DATA') {
+            throw new Exception("Não é possível retornar os dados no formato 'DATA' em tipo '{$type}'.", 400);
+        }
         return null;
     }
 }
