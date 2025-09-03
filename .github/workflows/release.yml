@@ -49,9 +49,11 @@ jobs:
             
             if (issues.data.length === 0) return 'No issues found in this milestone';
             
-            return issues.data
+            const issuesList = issues.data
               .map(issue => `#${issue.number} - ${issue.title}`)
               .join('\n');
+            
+            return `Release in this version:\n\n${issuesList}`;
 
       # Realiza a criação do release
       - name: Create Release
@@ -59,9 +61,4 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           name: "${{ github.ref_name }}"
-          body: |
-            Release in this version:
-            
-            ${{ steps.get-issues.outputs.result }}
-          draft: false
-          prerelease: false
+          body: ${{ steps.get-issues.outputs.result }}
