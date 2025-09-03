@@ -31,4 +31,4 @@ jobs:
 
       #Executar os Test com Pest
       - name: Executar testes Pest
-        run: ./vendor/bin/pest
+        run: ./vendor/bin/pest --colors=always -v --columns=max
