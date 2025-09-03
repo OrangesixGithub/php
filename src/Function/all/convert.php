@@ -73,7 +73,7 @@ if (!function_exists('filterData')) {
             $formateDate = function (string $value, bool $lastDayMonth = false): string {
                 $date = array_map('intval', explode('-', $value));
                 $date[0] = empty($date[0]) ? date('Y') : $date[0];
-                $date[1] = empty($date[1]) ? date('m') : $date[1];
+                $date[1] = empty($date[1]) ? ($lastDayMonth ? '12' : '1') : $date[1];
 
                 $day = new DateTime("{$date[0]}-{$date[1]}-01");
                 $day->modify('last day of this month');
@@ -90,7 +90,7 @@ if (!function_exists('filterData')) {
             }
 
             if ($return == 'DATA') {
-                return [$values[0], $values[1] ?? null, $op];
+                return [$formateDate($values[0]), empty($values[1]) ? null : $formateDate($values[1], true), $op];
             }
 
             if ($return == 'SQL') {
