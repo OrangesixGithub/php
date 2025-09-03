@@ -90,8 +90,7 @@ if (!function_exists('filterData')) {
             }
 
             if ($return == 'DATA') {
-                return null;
-                #return [$formateDate($values[0]), empty($values[1]) ? null : $formateDate($values[1], true), $op];
+                return [$formateDate($values[0]), empty($values[1]) ? null : $formateDate($values[1], true), $op];
             }
 
             if ($return == 'SQL') {
