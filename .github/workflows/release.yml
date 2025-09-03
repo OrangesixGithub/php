@@ -38,7 +38,7 @@ jobs:
             });
             
             const milestone = milestones.data.find(m => m.title === tag);
-            if (!milestone) return 'Nenhum milestone encontrado para esta tag';
+            if (!milestone) return 'No milestone found for this tag';
             
             const issues = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
@@ -47,10 +47,10 @@ jobs:
               state: 'all'
             });
             
-            if (issues.data.length === 0) return 'Nenhum issue encontrado neste milestone';
+            if (issues.data.length === 0) return 'No issues found in this milestone';
             
             return issues.data
-              .map(issue => `* #${issue.number} - ${issue.title}`)
+              .map(issue => `#${issue.number} - ${issue.title}`)
               .join('\n');
 
       # Realiza a criação do release
