@@ -49,11 +49,9 @@ jobs:
             
             if (issues.data.length === 0) return 'Nenhum issue encontrado neste milestone';
             
-            const issuesList = issues.data
+            return issues.data
               .map(issue => `* #${issue.number} - ${issue.title}`)
-              .join('\r\n');
-            
-            return issuesList;
+              .join('\n');
 
       # Realiza a criação do release
       - name: Create Release
