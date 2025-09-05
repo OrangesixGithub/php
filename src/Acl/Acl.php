@@ -4,6 +4,7 @@ namespace Orangesix\Acl;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Orangesix\Acl\Enum\AclPermissionsAction;
 use Orangesix\Acl\Model\PermissionsGroupModel;
 use Orangesix\Acl\Model\PermissionsModel;
@@ -114,9 +115,18 @@ class Acl
             }
             foreach ($id_permissions as $id_permission) {
                 if ($action->value == 'profile') {
+                    if (!ProfileModel::query()->where('id', '=', $binding)->exists()) {
+                        throw new \Exception('O perfil não existe na tabela acl_perfil.');
+                    }
                     $data = ['id_perfil' => $binding, 'id_permissoes' => $id_permission];
                     ProfilePermissionsModel::query()->updateOrCreate($data, $data);
                 } else {
+                    $foregin = config('acl.filial')
+                        ? app(config('acl.models.user_filial'))->getTable()
+                        : app(config('acl.models.user'))->getTable();
+                    if (!DB::table($foregin)->where('id', '=', $binding)->exists()) {
+                        throw new \Exception('O usuário ' . (config('acl.filial') ? 'da filial' : '') . ' não existe na tabela ' . $foregin);
+                    }
                     $data = [$bindingUserField => $binding, 'id_permissoes' => $id_permission];
                     PermissionsUserModel::query()->updateOrCreate($data, $data);
                 }
@@ -153,6 +163,12 @@ class Acl
         }
         if ($active) {
             foreach ($id_profile as $id) {
+                $foregin = config('acl.filial')
+                    ? app(config('acl.models.user_filial'))->getTable()
+                    : app(config('acl.models.user'))->getTable();
+                if (!DB::table($foregin)->where('id', '=', $binding)->exists()) {
+                    throw new \Exception('O usuário ' . (config('acl.filial') ? 'da filial' : '') . ' não existe na tabela ' . $foregin);
+                }
                 $data = ['id_acl_perfil' => $id, $bindingField => $binding];
                 ProfileUserModel::query()->updateOrCreate($data, $data);
             }

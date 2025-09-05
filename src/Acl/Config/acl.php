@@ -6,6 +6,7 @@ return [
 
     'models' => [
         'user' => env('ACL_USER_MODEL', 'App\Models\User'),
+        'user_filial' => env('ACL_USER_FILIAL_MODEL', 'App\Models\UserFilial'),
     ],
 
     'rules' => [

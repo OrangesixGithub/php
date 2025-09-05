@@ -70,52 +70,40 @@ return new class () extends Migration {
 
         //ACL - Permissões Usuário
         Schema::create('acl_permissoes_usuario', function (Blueprint $table) {
+            $field = config('acl.filial') ? 'id_usuario_filial' : 'id_usuario';
+            $foregin = config('acl.filial')
+                ? app(config('acl.models.user_filial'))->getTable()
+                : app(config('acl.models.user'))->getTable();
             $table->id();
-            if (config('acl.filial')) {
-                $table->foreignId('id_usuario_filial')
-                    ->constrained('usuario_filial')
-                    ->onUpdate('no action')
-                    ->onDelete('cascade');
-            } else {
-                $table->foreignId('id_usuario')
-                    ->constrained(app(config('acl.models.user'))->getTable())
-                    ->onUpdate('no action')
-                    ->onDelete('cascade');
-            }
+            $table->foreignId($field)
+                ->constrained($foregin)
+                ->onUpdate('no action')
+                ->onDelete('cascade');
             $table->foreignId('id_permissoes')
                 ->constrained('acl_permissoes')
                 ->onUpdate('no action')
                 ->onDelete('cascade');
-            $table->unique([
-                config('acl.filial') ? 'id_usuario_filial' : 'id_usuario',
-                'id_permissoes'
-            ]);
+            $table->unique([$field, 'id_permissoes']);
             $table->timestamps();
         });
 
         //ACL - Filial Perfil
         $aclTableUser = config('acl.filial') ? 'usuario_filial_acl_perfil' : 'usuario_acl_perfil';
         Schema::create($aclTableUser, function (Blueprint $table) {
+            $field = config('acl.filial') ? 'id_usuario_filial' : 'id_usuario';
+            $foregin = config('acl.filial')
+                ? app(config('acl.models.user_filial'))->getTable()
+                : app(config('acl.models.user'))->getTable();
             $table->id();
-            if (config('acl.filial')) {
-                $table->foreignId('id_usuario_filial')
-                    ->constrained('usuario_filial')
-                    ->onUpdate('no action')
-                    ->onDelete('cascade');
-            } else {
-                $table->foreignId('id_usuario')
-                    ->constrained(app(config('acl.models.user'))->getTable())
-                    ->onUpdate('no action')
-                    ->onDelete('cascade');
-            }
+            $table->foreignId($field)
+                ->constrained($foregin)
+                ->onUpdate('no action')
+                ->onDelete('cascade');
             $table->foreignId('id_acl_perfil')
                 ->constrained('acl_perfil')
                 ->onUpdate('no action')
                 ->onDelete('cascade');
-            $table->unique([
-                config('acl.filial') ? 'id_usuario_filial' : 'id_usuario',
-                'id_acl_perfil'
-            ]);
+            $table->unique([$field, 'id_acl_perfil']);
             $table->timestamps();
         });
     }
