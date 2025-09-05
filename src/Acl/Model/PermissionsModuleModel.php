@@ -5,10 +5,10 @@ namespace Orangesix\Acl\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class PermissoesModel extends Model
+class PermissionsModuleModel extends Model
 {
     use HasFactory;
 
-    /** @var string  */
-    public $table = 'acl_permissoes';
+    /** @var string */
+    public $table = 'acl_permissoes_modulo';
 }

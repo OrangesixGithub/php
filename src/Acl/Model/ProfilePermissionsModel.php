@@ -5,10 +5,13 @@ namespace Orangesix\Acl\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class PerfilPermissoesModel extends Model
+class ProfilePermissionsModel extends Model
 {
     use HasFactory;
 
-    /** @var string  */
+    /** @var string */
     public $table = 'acl_perfil_permissoes';
+
+    /** @var array */
+    protected $guarded = [];
 }
