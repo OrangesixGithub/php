@@ -2,29 +2,36 @@
 
 namespace Orangesix\Acl;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Orangesix\Acl\Exceptions\Acl;
 
 trait HasAcl
 {
     /**
-     * Realiza a validação da permissão parametrizada
+     * Realiza a validação das permissões na sessão de acordo com parâmetro
      * @param int|array $permission
-     * @param bool $exception
-     * @return bool
+     * @return array | bool
      */
-    public static function acl(int|array $permission, bool $exception = false): bool
+    public static function acl(int|array $permissions = [], bool $exception = false): array|bool
     {
-        $acl = session()->get('acl_' . self::$acl_app . '_permissions');
-        $validated = false;
-        if (is_array($acl)) {
-            if (is_int($permission)) {
-                $validated = in_array($permission, $acl);
-            } else {
-                $validated = collect($acl)->filter(function ($item) use ($permission) {
-                    return in_array($item, $permission);
-                })->count() > 0;
+        $acl = session()->get('acl_' . config('acl.session'));
+        if (is_int($permissions)) {
+            if (!$exception) {
+                return in_array($permissions, $acl);
             }
+            $validated = in_array($permissions, $acl);
+        } else {
+            $result = [];
+            foreach ($permissions as $item) {
+                $result[$item] = in_array($item, $acl);
+            }
+            $validated = collect($acl)->filter(function ($item) use ($permissions) {
+                return in_array($item, $permissions);
+            })->count() > 0;
+        }
+        if (!$exception) {
+            return $result;
         }
         if ($exception && !$validated) {
             throw new Acl('Você não possui permissão para acessar este recurso!', 403);
@@ -33,59 +40,54 @@ trait HasAcl
     }
 
     /**
-     * Obtém o array de permissões de acordo com parâmetro
-     * @param int|array $permission
-     * @return array | bool
-     */
-    public static function getAcl(int|array $permission): array | bool
-    {
-        $acl = session()->get('acl_' . self::$acl_app . '_permissions');
-        if (is_int($permission)) {
-            return in_array($permission, $acl);
-        }
-        $result = [];
-        foreach ($permission as $item) {
-            $result[$item] = in_array($item, $acl);
-        }
-        return $result;
-    }
-
-    /**
-     * Realiza o carregamento das permissões
-     * @param int $id_filial
+     * Realiza o carregamento das permissões após LOGIN do usuário
+     * @param int|null $id_filial
      * @return void
      */
-    public function aclLoadPermissions(int $id_filial): void
+    public static function aclLoad(?int $id_filial = null): void
     {
-        $perfil = DB::table('acl_perfil')
-            ->select('acl_perfil.*')
-            ->join('usuario_filial_acl_perfil', 'usuario_filial_acl_perfil.id_acl_perfil', '=', 'acl_perfil.id')
-            ->join('usuario_filial', 'usuario_filial.id', '=', 'usuario_filial_acl_perfil.id_usuario_filial')
-            ->where('acl_perfil.id_filial', $id_filial)
-            ->where('usuario_filial.id_usuario', $this->id)
+        $user = Auth::id();
+        if (empty($user)) {
+            return;
+        }
+        $profile = DB::table('acl_perfil')
+            ->select('acl_perfil.id')
+            ->when(config('acl.filial'), function ($query) use ($user, $id_filial) {
+                $query->join('usuario_filial_acl_perfil', 'usuario_filial_acl_perfil.id_acl_perfil', '=', 'acl_perfil.id');
+                $query->join('usuario_filial', 'usuario_filial.id', '=', 'usuario_filial_acl_perfil.id_usuario_filial');
+                if (!empty($id_filial)) {
+                    $query->where('acl_perfil.id_filial', $id_filial);
+                }
+                $query->where('usuario_filial.id_usuario', $user);
+            })
+            ->when(!config('acl.filial'), function ($query) use ($user) {
+                $query->join('usuario_acl_perfil', 'usuario_acl_perfil.id_acl_perfil', '=', 'acl_perfil.id');
+                $query->where('usuario_acl_perfil.id_usuario', $user);
+            })
             ->get()
             ->groupBy('id')
             ->keys()
             ->all();
 
-        $permissoesPerfil = DB::table('acl_perfil_permissoes')
-            ->select([
-                'acl_permissoes.id'
-            ])
+        $permissionsProfile = DB::table('acl_perfil_permissoes')
+            ->select('acl_permissoes.id')
             ->join('acl_permissoes', 'acl_permissoes.id', '=', 'acl_perfil_permissoes.id_permissoes')
-            ->whereIn('acl_perfil_permissoes.id_perfil', $perfil)
+            ->whereIn('acl_perfil_permissoes.id_perfil', $profile)
             ->where('acl_permissoes.ativo', '=', 'S');
 
-        $permissoesUsuario = DB::table('acl_permissoes_usuario')
-            ->select([
-                'acl_permissoes.id'
-            ])
-            ->join('usuario_filial', 'usuario_filial.id', '=', 'acl_permissoes_usuario.id_usuario_filial')
+        $permissionsUsers = DB::table('acl_permissoes_usuario')
+            ->select('acl_permissoes.id')
+            ->when(config('acl.filial'), function ($query) use ($user, $id_filial) {
+                $query->join('usuario_filial', 'usuario_filial.id', '=', 'acl_permissoes_usuario.id_usuario_filial');
+                $query->where('usuario_filial.id_filial', $id_filial);
+                $query->where('usuario_filial.id_usuario', $user);
+            })
+            ->when(!config('acl.filial'), function ($query) use ($user) {
+                $query->where('acl_permissoes_usuario.id_usuario', $user);
+            })
             ->join('acl_permissoes', 'acl_permissoes.id', '=', 'acl_permissoes_usuario.id_permissoes')
-            ->where('usuario_filial.id_filial', $id_filial)
-            ->where('usuario_filial.id_usuario', $this->id)
-            ->union($permissoesPerfil)
+            ->union($permissionsProfile)
             ->get();
-        session(['acl_' . self::$acl_app . '_permissions' => $permissoesUsuario->groupBy('id')->keys()->all()]);
+        session(['acl_' . config('acl.session') => $permissionsUsers->groupBy('id')->keys()->all()]);
     }
 }

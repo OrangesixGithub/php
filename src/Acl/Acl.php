@@ -20,6 +20,8 @@ use Orangesix\Acl\Model\ProfileUserModel;
  */
 class Acl
 {
+    use HasAcl;
+
     /**
      * @return array
      */

@@ -2,16 +2,21 @@
 
 namespace Orangesix\Acl\Exceptions;
 
+use Illuminate\Foundation\Application;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Routing\Redirector;
+use Illuminate\Support\Facades\Session;
+
 class Acl extends \Exception
 {
     /**
-     * @return \Illuminate\Foundation\Application|\Illuminate\Routing\Redirector|string|\Illuminate\Http\RedirectResponse|\Illuminate\Contracts\Foundation\Application
+     * @return Application|Redirector|string|RedirectResponse|\Illuminate\Contracts\Foundation\Application
      */
-    public function render(): \Illuminate\Foundation\Application|\Illuminate\Routing\Redirector|string|\Illuminate\Http\RedirectResponse|\Illuminate\Contracts\Foundation\Application
+    public function render(): Application|Redirector|string|RedirectResponse|\Illuminate\Contracts\Foundation\Application
     {
         if (request()->method() == 'GET') {
-            session()->flash('message', $this->message);
-            session()->flash('messageType', 'warning');
+            Session::flash('message', $this->message);
+            Session::flash('messageType', 'warning');
             return redirect(url()->previous());
         } else {
             abort(400, $this->message);

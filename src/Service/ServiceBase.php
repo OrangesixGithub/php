@@ -53,7 +53,7 @@ abstract class ServiceBase implements Service
      * @return mixed
      * @throws \Exception
      */
-    public function __call(string $name, array $arguments)
+    public function __call(string $name, array $arguments): mixed
     {
         if (method_exists($this->repository, $name)) {
             $reflection = new \ReflectionMethod($this->repository, $name);
@@ -63,6 +63,28 @@ abstract class ServiceBase implements Service
         } else {
             throw new \BadMethodCallException('Método não existe no service ou repository.', 500);
         }
+    }
+
+    /**
+     * @param string $name
+     * @param array $arguments
+     * @return mixed
+     * @throws BindingResolutionException
+     */
+    public static function __callStatic(string $name, array $arguments): mixed
+    {
+        $service = app()->make(static::class);
+        if (method_exists($service->repository, $name)) {
+            $reflection = new \ReflectionMethod($service->repository, $name);
+            if ($reflection->isStatic()) {
+                return forward_static_call_array([get_class($service->repository), $name], $arguments);
+            }
+        }
+        $model = $service->getModel();
+        if (method_exists($model, $name)) {
+            return forward_static_call_array([$model, $name], $arguments);
+        }
+        throw new \BadMethodCallException('Método não existe no service ou repository.', 500);
     }
 
     /**

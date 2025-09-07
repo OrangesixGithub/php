@@ -23,5 +23,7 @@ return [
             ['id' => 3, 'id_permissoes_grupo' => 2, 'nome' => 'Visualizar'],
             ['id' => 4, 'id_permissoes_grupo' => 2, 'nome' => 'Gerenciar'],
         ]
-    ]
+    ],
+
+    'session' => env('ACL_SESSION', 'app')
 ];
