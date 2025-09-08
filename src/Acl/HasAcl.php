@@ -15,7 +15,7 @@ trait HasAcl
      */
     public static function acl(int|array $permissions = [], bool $exception = false): array|bool
     {
-        $acl = session()->get('acl_' . config('acl.session'));
+        $acl = session()->get('acl_' . config('acl.session')) ?? [];
         if (is_int($permissions)) {
             if (!$exception) {
                 return in_array($permissions, $acl);

@@ -13,12 +13,6 @@ interface Service
     public function getModel(): Model;
 
     /**
-     * @param mixed $paramns
-     * @return mixed
-     */
-    public function find(mixed ...$paramns): mixed;
-
-    /**
      * @param Request $request
      * @return mixed
      */
