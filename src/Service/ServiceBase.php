@@ -96,15 +96,6 @@ abstract class ServiceBase implements Service
     }
 
     /**
-     * @param mixed $paramns
-     * @return mixed
-     */
-    public function find(mixed ...$paramns): mixed
-    {
-        return $this->repository->find(...$paramns);
-    }
-
-    /**
      * @param Request $request
      * @return mixed
      */
