@@ -15,6 +15,15 @@ trait RepositoryDataBase
     }
 
     /**
+     * @param mixed ...$paramns
+     * @return mixed
+     */
+    public function find(int $id): mixed
+    {
+        return $this->model::findOrFail($id);
+    }
+
+    /**
      * @param array $data
      * @return int
      */
@@ -38,15 +47,5 @@ trait RepositoryDataBase
     {
         $data = $this->model::findOrFail($id);
         $data->delete();
-    }
-
-    /**
-     * @param mixed ...$paramns
-     * @return mixed
-     */
-    public function find(mixed ...$paramns): mixed
-    {
-        $id = is_int($paramns[0]) ? $paramns[0] : 0;
-        return $this->model::findOrFail($id);
     }
 }

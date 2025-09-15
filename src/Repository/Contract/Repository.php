@@ -12,12 +12,6 @@ interface Repository
     public function getModel(): Model;
 
     /**
-     * @param mixed $paramns
-     * @return mixed
-     */
-    public function find(mixed ...$paramns): mixed;
-
-    /**
      * @param array $data
      * @return int
      */
