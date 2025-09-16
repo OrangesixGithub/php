@@ -3,7 +3,7 @@
 namespace Orangesix\Acl;
 
 use Illuminate\Support\ServiceProvider;
-use Orangesix\Acl\Http\Middleware\CheckPermission;
+use Orangesix\Acl\Http\Middleware\AclMiddleware;
 
 class AclServiceProvider extends ServiceProvider
 {
@@ -22,7 +22,7 @@ class AclServiceProvider extends ServiceProvider
         /**
          * Register Middleware
          */
-        $this->app['router']->aliasMiddleware('acl', CheckPermission::class);
+        $this->app['router']->aliasMiddleware('acl', AclMiddleware::class);
     }
 
     /**

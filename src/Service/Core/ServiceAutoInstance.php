@@ -13,7 +13,7 @@ trait ServiceAutoInstance
     private function instanceAutoService(string $class): mixed
     {
         $namespace = $this->getClassProperty($class);
-        if ($namespace) {
+        if ($namespace && str_contains($namespace, 'service')) {
             return app()->make($namespace);
         }
 
