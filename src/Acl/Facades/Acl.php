@@ -12,6 +12,8 @@ use Orangesix\Acl\Enum\AclPermissionsAction;
  * @method static array getGroup(?int $id_module = null)
  * @method static array getPermissions(?int $id_group = null)
  * @method static array getProfile(?int $id_filial = null)
+ * @method static array getProfilePermissions(int $id_profile)
+ * @method static array getUserPermissions(int $id_user)
  * @method static void setAcl()
  * @method static void setProfile(Request $request)
  * @method static void managerPermissions(int $binding, array|int $id_permissions, AclPermissionsAction $action = AclPermissionsAction::Profile, bool $active = true)

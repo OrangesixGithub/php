@@ -75,6 +75,41 @@ class Acl
     }
 
     /**
+     * @param int $id_profile
+     * @return array
+     */
+    public function getProfilePermissions(int $id_profile): array
+    {
+        return ProfilePermissionsModel::query()
+            ->select([
+                'acl_permissoes.*',
+                'acl_perfil_permissoes.id_perfil'
+            ])
+            ->join('acl_permissoes', 'acl_permissoes.id', '=', 'acl_perfil_permissoes.id_permissoes')
+            ->where('id_perfil', $id_profile)
+            ->get()
+            ->toArray();
+    }
+
+    /**
+     * @param int $id_user
+     * @return array
+     */
+    public function getUserPermissions(int $id_user): array
+    {
+        $field = config('acl.filial') ? 'id_usuario_filial' : 'id_usuario';
+        return PermissionsUserModel::query()
+            ->select([
+                'acl_permissoes.*',
+                'acl_permissoes_usuario.' . $field
+            ])
+            ->join('acl_permissoes', 'acl_permissoes.id', '=', 'acl_permissoes_usuario.' . $field)
+            ->where($field, $id_user)
+            ->get()
+            ->toArray();
+    }
+
+    /**
      * @return void
      * @throws \Exception
      */
