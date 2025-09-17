@@ -2,6 +2,7 @@
 
 namespace Orangesix\Acl;
 
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Orangesix\Acl\Http\Middleware\AclMiddleware;
 
@@ -35,5 +36,18 @@ class AclServiceProvider extends ServiceProvider
             $this->publishes([__DIR__ . '/Database/seeders/' => database_path('seeders')], 'acl-seeders');
             $this->publishes([__DIR__ . '/Database/migrations/' => database_path('migrations')], 'acl-migrations');
         }
+
+        $this->registerBladeDirectives();
+    }
+
+    /**
+     * Records the Blade Package Directive
+     */
+    private function registerBladeDirectives(): void
+    {
+        Blade::if('acl', function (int|array $permissions) {
+            $acl = \Orangesix\Acl\Facades\Acl::acl($permissions);
+            return is_bool($acl) ? $acl : collect($acl)->filter(fn ($item) => $item)->count() > 0;
+        });
     }
 }
