@@ -18,6 +18,7 @@ use Orangesix\Acl\Enum\AclPermissionsAction;
  * @method static void setProfile(Request $request)
  * @method static void managerPermissions(int $binding, array|int $id_permissions, AclPermissionsAction $action = AclPermissionsAction::Profile, bool $active = true)
  * @method static void managerProfile(int $binding, array|int $id_profile, bool $active = true)
+ * @method static void delete(int $binding, AclPermissionsAction $action = AclPermissionsAction::Profile)
  * @method static array|bool acl(int|array $permissions = [], bool $exception = false)
  * @method static void aclLoad(?int $id_filial = null)
  *

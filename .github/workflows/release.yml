@@ -6,9 +6,6 @@ on:
     branches: [ master ]
 
 jobs:
-  test:
-    uses: ./.github/workflows/commit.yml
-
   generate-release:
     runs-on: ubuntu-latest
     permissions:

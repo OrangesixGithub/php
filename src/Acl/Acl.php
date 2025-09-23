@@ -216,4 +216,23 @@ class Acl
                 ->delete();
         }
     }
+
+    /**
+     * @param int $binding
+     * @param AclPermissionsAction $action
+     * @return void
+     */
+    public function delete(int $binding, AclPermissionsAction $action = AclPermissionsAction::Profile): void
+    {
+        if ($action->value == 'profile') {
+            ProfileModel::query()
+                ->where('id', '=', $binding)
+                ->delete();
+        } else {
+            $bindingField = config('acl.filial') ? 'id_usuario_filial' : 'id_usuario';
+            PermissionsUserModel::query()
+                ->where($bindingField, '=', $binding)
+                ->delete();
+        }
+    }
 }
