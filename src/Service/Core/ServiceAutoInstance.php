@@ -18,10 +18,10 @@ trait ServiceAutoInstance
         }
 
         $service = str_replace('service', '', $class) . 'Service';
-        $paths = [
+        $paths = empty(config('orangesix.service_path')) ? [
             app_path('Service'),
             app_path('Services'),
-        ];
+        ] : config('orangesix.service_path');
         foreach ($paths as $servicePath) {
             $instance = getClass($servicePath, $service);
             if (!empty($instance)) {

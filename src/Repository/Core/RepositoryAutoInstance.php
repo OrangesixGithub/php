@@ -15,10 +15,10 @@ trait RepositoryAutoInstance
     private function instanceAutoRepository(string $class): mixed
     {
         $repository = str_replace('repository', '', $class) . 'Repository';
-        $paths = [
+        $paths = empty(config('repository_path')) ? [
             app_path('Repository'),
             app_path('Repositories'),
-        ];
+        ] : config('repository_path');
         foreach ($paths as $repositoryPath) {
             $instance = getClass($repositoryPath, $repository);
             if (!empty($instance)) {

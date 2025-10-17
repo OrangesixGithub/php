@@ -78,7 +78,7 @@ class Acl
      * @param int $id_profile
      * @return array
      */
-    public function getProfilePermissions(int $id_profile): array
+    public function getProfilePermissions(int|array $id_profile): array
     {
         return ProfilePermissionsModel::query()
             ->select([
@@ -86,7 +86,29 @@ class Acl
                 'acl_perfil_permissoes.id_perfil'
             ])
             ->join('acl_permissoes', 'acl_permissoes.id', '=', 'acl_perfil_permissoes.id_permissoes')
-            ->where('id_perfil', $id_profile)
+            ->when(is_array($id_profile), function ($query) use ($id_profile) {
+                $query->whereIn('id_perfil', $id_profile);
+            })
+            ->when(!is_array($id_profile), function ($query) use ($id_profile) {
+                $query->where('id_perfil', $id_profile);
+            })
+            ->get()
+            ->toArray();
+    }
+
+    /**
+     * @param int $id_user
+     * @param int|null $id_filial
+     * @return array
+     */
+    public function getUserProfile(int $id_user): array
+    {
+        $table = config('acl.filial') ? 'usuario_filial_acl_perfil' : 'usuario_acl_perfil';
+        $field = config('acl.filial') ? 'id_usuario_filial' : 'id_usuario';
+        return ProfileUserModel::query()
+            ->select('acl_perfil.*')
+            ->join('acl_perfil', 'acl_perfil.id', '=', "{$table}.id_acl_perfil")
+            ->where($field, '=', $id_user)
             ->get()
             ->toArray();
     }
@@ -103,8 +125,8 @@ class Acl
                 'acl_permissoes.*',
                 'acl_permissoes_usuario.' . $field
             ])
-            ->join('acl_permissoes', 'acl_permissoes.id', '=', 'acl_permissoes_usuario.' . $field)
-            ->where($field, $id_user)
+            ->join('acl_permissoes', 'acl_permissoes.id', '=', 'acl_permissoes_usuario.id_permissoes')
+            ->where($field, '=', $id_user)
             ->get()
             ->toArray();
     }

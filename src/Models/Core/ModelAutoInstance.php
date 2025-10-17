@@ -14,10 +14,10 @@ trait ModelAutoInstance
     private function instanceAutoModel(string $class): mixed
     {
         $model = str_replace('model', '', $class) . 'Model';
-        $paths = [
+        $paths = empty(config('model_path')) ? [
             app_path('Model'),
             app_path('Models'),
-        ];
+        ] : config('model_path');
         foreach ($paths as $modelPath) {
             $instance = getClass($modelPath, $model);
             if (!empty($instance)) {
