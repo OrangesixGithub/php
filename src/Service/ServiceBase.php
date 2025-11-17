@@ -96,12 +96,14 @@ abstract class ServiceBase implements Service
     }
 
     /**
-     * @param Request $request
+     * @param array|Request $request
      * @return mixed
      */
-    public function manager(Request $request): mixed
+    public function manager(array|Request $request): mixed
     {
-        if (method_exists($request, 'validated')) {
+        if (is_array($request)) {
+            $data = $request;
+        } elseif (method_exists($request, 'validated')) {
             $data = $request->validated();
         } else {
             if (!empty($this->validated)) {
@@ -138,19 +140,21 @@ abstract class ServiceBase implements Service
     }
 
     /**
-     * @param Request $request
+     * @param array|Request $request
      * @return void
      */
-    public function delete(Request $request): void
+    public function delete(array|Request $request): void
     {
         try {
             DB::beginTransaction();
+
+            $id = is_array($request) ? $request['id'] : $request->id;
 
             if ($this->beforeDelete instanceof \Closure) {
                 ($this->beforeDelete)($request->all());
             }
 
-            $this->repository->remove($request->id);
+            $this->repository->remove($id);
 
             if ($this->afterDelete instanceof \Closure) {
                 ($this->afterDelete)($request->all());

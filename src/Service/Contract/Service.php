@@ -13,16 +13,16 @@ interface Service
     public function getModel(): Model;
 
     /**
-     * @param Request $request
+     * @param array|Request $request
      * @return mixed
      */
-    public function manager(Request $request): mixed;
+    public function manager(array|Request $request): mixed;
 
     /**
-     * @param Request $request
+     * @param array|Request $request
      * @return void
      */
-    public function delete(Request $request): void;
+    public function delete(array|Request $request): void;
 
     /**
      * @param array $validation
