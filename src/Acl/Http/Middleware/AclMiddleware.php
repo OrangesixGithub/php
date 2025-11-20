@@ -23,9 +23,15 @@ class AclMiddleware
 
         $method = $request->route()->getActionMethod();
         $gates = config('acl.gates') ?? [];
-        $permissionCheck = (empty($permission)
-            ? (isset($gates[$method]) ? $gates[$method] : config('acl.gate_default'))
-            : strtoupper($permission));
+        $gateRule = !empty($permission)
+            ? strtoupper($permission)
+            : (isset($gates[$method]) ? $gates[$method] : config('acl.gate_default'));
+
+        if ($gateRule instanceof Closure) {
+            $permissionCheck = $gateRule($request);
+        } else {
+            $permissionCheck = $gateRule;
+        }
 
         if (enum_exists($acl) && defined($acl . "::{$permissionCheck}")) {
             Acl::acl(constant($acl . '::' . $permissionCheck)->value, true);

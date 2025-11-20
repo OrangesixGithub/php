@@ -31,7 +31,9 @@ trait RepositoryDataBase
     {
         $model = empty($data['id'])
             ? $this->model
-            : $this->model::findOrFail($data['id']);
+            : $this->model::query()
+                ->withoutGlobalScopes()
+                ->findOrFail($data['id']);
         foreach ($data as $key => $value) {
             $model->$key = $value;
         }
