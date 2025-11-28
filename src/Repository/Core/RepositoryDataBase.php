@@ -47,7 +47,9 @@ trait RepositoryDataBase
      */
     public function remove(int $id): void
     {
-        $data = $this->model::findOrFail($id);
+        $data = $this->model::query()
+            ->withoutGlobalScopes()
+            ->findOrFail($id);
         $data->delete();
     }
 }
