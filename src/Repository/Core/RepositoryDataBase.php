@@ -20,7 +20,9 @@ trait RepositoryDataBase
      */
     public function find(int $id): mixed
     {
-        return $this->model::findOrFail($id);
+        return $this->model::query()
+            ->withoutGlobalScopes()
+            ->findOrFail($id);
     }
 
     /**
@@ -31,9 +33,7 @@ trait RepositoryDataBase
     {
         $model = empty($data['id'])
             ? $this->model
-            : $this->model::query()
-                ->withoutGlobalScopes()
-                ->findOrFail($data['id']);
+            : $this->find($data['id']);
         foreach ($data as $key => $value) {
             $model->$key = $value;
         }
@@ -47,9 +47,7 @@ trait RepositoryDataBase
      */
     public function remove(int $id): void
     {
-        $data = $this->model::query()
-            ->withoutGlobalScopes()
-            ->findOrFail($id);
+        $data = $this->find($id);
         $data->delete();
     }
 }
