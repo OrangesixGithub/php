@@ -6,8 +6,8 @@ use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Orangesix\Repository\Core\RepositoryAutoInstance;
 use Orangesix\Repository\Contract\Repository;
+use Orangesix\Repository\Core\RepositoryAutoInstance;
 use Orangesix\Repository\RepositoryBase;
 use Orangesix\Service\Contract\Service;
 use Orangesix\Service\Core\ServiceAutoInstance;
@@ -151,13 +151,13 @@ abstract class ServiceBase implements Service
             $id = is_array($request) ? $request['id'] : $request->id;
 
             if ($this->beforeDelete instanceof \Closure) {
-                ($this->beforeDelete)($request->all());
+                ($this->beforeDelete)($request);
             }
 
             $this->repository->remove($id);
 
             if ($this->afterDelete instanceof \Closure) {
-                ($this->afterDelete)($request->all());
+                ($this->afterDelete)($request);
             }
 
             DB::commit();

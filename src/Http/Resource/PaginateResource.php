@@ -2,10 +2,10 @@
 
 namespace Orangesix\Http\Resource;
 
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Database\Query\Builder;
-use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 
 class PaginateResource
 {
@@ -13,23 +13,18 @@ class PaginateResource
      * Retorna os dados da paginação
      *
      * @param Builder|EloquentBuilder $query
-     * @param string $resource
+     * @param null|string $resource
      * @param Request|null $request
-     * @param callable|null $getItens
-     * @param string $action
      * @return array
      */
     public static function toArray(
         Builder|EloquentBuilder $query,
-        string                  $resource,
-        ?Request                $request = null,
-        ?callable               $getItens = null,
-        string                  $action = 'findAll'
+        ?string                 $resource = null,
+        ?Request                $request = null
     ): array {
         if (!class_exists($resource) || !is_subclass_of($resource, JsonResource::class)) {
-            throw new \InvalidArgumentException("A classe $resource deve ser do tipo de " . JsonResource::class);
+            $resource = DefaultResource::class;
         }
-
         $request ??= new Request();
 
         $columns = $request->input('columns') ?? ['*'];
@@ -37,17 +32,13 @@ class PaginateResource
         $perPage = (int)$request->input('elements', 15);
 
         /** @var class-string<JsonResource> $resource */
-        $collection = $resource::collection(
-            $query->paginate($perPage, $columns, 'page', $page)
-        );
+        $collection = $resource::collection($query->paginate($perPage, $columns, 'page', $page));
 
         $paginate = $collection->resource;
-        $itens = $collection->toArray(new Request([
-            'action' => $action
-        ]));
+        $itens = $collection->toArray($request->merge(['action' => 'findAll']));
         return [
             'pagination' => $paginate,
-            'itens' => empty($getItens) ? $itens : $getItens($itens)
+            'itens' => $itens['data'] ?? $itens
         ];
     }
 }
