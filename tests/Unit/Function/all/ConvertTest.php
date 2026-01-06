@@ -38,9 +38,9 @@ describe('Function -> all -> convert.php', function () {
             ->and(filterData('2/9/2025=', 'date', 'SQL', 'field'))->toBe("field = '2025-09-02'")
             ->and(filterData('0/1/2025{}0/12/2025', 'date', 'SQL', 'field'))->toBe("field BETWEEN '2025-1-01' AND '2025-12-31'")
             ->and(filterData('0/0/2025{}0/0/2026', 'date', 'SQL', 'field'))->toBe("field BETWEEN '2025-1-01' AND '2026-12-31'")
-            ->and(filterData('0/9/0{}0/10/0', 'date', 'SQL', 'field'))->toBe("field BETWEEN '2025-9-01' AND '2025-10-31'")
+            ->and(filterData('0/9/0{}0/10/0', 'date', 'SQL', 'field'))->toBe("field BETWEEN '" . date('Y') . "-9-01' AND '" . date('Y') . "-10-31'")
             ->and(filterData('', 'date', 'SQL', 'field'))->toBeNull()
-            ->and(filterData('10/0/0=', 'date', 'DATA', 'field'))->toEqual(['2025-1-10', null, '='])
-            ->and(filterData('10/0/0{}0/0/2025', 'date', 'DATA', 'field'))->toEqual(['2025-1-10', '2025-12-31', '{}']);
+            ->and(filterData('10/0/0=', 'date', 'DATA', 'field'))->toEqual([date('Y') . '-1-10', null, '='])
+            ->and(filterData('10/0/0{}0/0/2025', 'date', 'DATA', 'field'))->toEqual([date('Y') . '-1-10', '2025-12-31', '{}']);
     });
 });
