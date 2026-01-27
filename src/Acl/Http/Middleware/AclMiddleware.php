@@ -35,6 +35,10 @@ class AclMiddleware
 
         if (enum_exists($acl) && defined($acl . "::{$permissionCheck}")) {
             Acl::acl(constant($acl . '::' . $permissionCheck)->value, true);
+        } elseif (enum_exists($acl) && method_exists($acl, $permissionCheck)) {
+            if (!$acl::$permissionCheck($request)) {
+                abort(403, 'Acesso negado');
+            }
         } else {
             $message = config('app.debug')
                 ? "Permissão não encontrada: {$acl}::{$permissionCheck}"
