@@ -27,8 +27,8 @@ class AclMiddleware
             ? strtoupper($permission)
             : (isset($gates[$method]) ? $gates[$method] : config('acl.gate_default'));
 
-        if ($gateRule instanceof Closure) {
-            $permissionCheck = $gateRule($request);
+        if (class_exists($gateRule) && method_exists($gateRule, 'resolve')) {
+            $permissionCheck = $gateRule::resolve($request);
         } else {
             $permissionCheck = $gateRule;
         }
