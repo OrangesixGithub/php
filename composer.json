@@ -1,36 +1,40 @@
 {
   "name": "orangesix/php",
-  "description": "Biblioteca de funções utilizadas no desenvolvimento de projetos PHP com Laravel.",
+  "description": "Permission management for Laravel and set of auxiliary functions for Laravel application.",
   "keywords": [
-    "Orangesix",
-    "Laravel"
+    "permission",
+    "orangesix",
+    "laravel"
   ],
+  "support": {
+    "issues": "https://github.com/OrangesixGithub/php/issues",
+    "source": "https://github.com/OrangesixGithub/php"
+  },
   "license": "MIT",
+  "authors": [
+    {
+      "name": "Luiz Fernando Bernardes de Paula",
+      "email": "nandovga@hotmail.com"
+    }
+  ],
+  "require": {
+    "php": "^8.3",
+    "laravel/framework": "^11.0 || ^12.0 || ^13.0"
+  },
   "autoload": {
     "psr-4": {
       "Orangesix\\": "src",
       "Tests\\": "tests"
     },
     "files": [
-      "src/Function/all/class.php",
-      "src/Function/all/convert.php",
-      "src/Function/date/hours.php",
-      "src/Function/date/period.php",
-      "src/Function/laravel/view.php"
+      "./src/Function/all/class.php",
+      "./src/Function/all/convert.php",
+      "./src/Function/date/hours.php",
+      "./src/Function/date/period.php",
+      "./src/Function/laravel/view.php"
     ]
   },
-  "authors": [
-    {
-      "name": "Luiz Fernando Bernardes de Paula",
-      "email": "nandovga@hotmail.com",
-      "role": "developer"
-    }
-  ],
   "minimum-stability": "stable",
-  "require": {
-    "php": "^8.3",
-    "laravel/framework": "^12.0"
-  },
   "require-dev": {
     "laravel/pint": "^1.13",
     "pestphp/pest": "^4.0"
