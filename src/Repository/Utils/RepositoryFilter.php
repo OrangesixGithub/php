@@ -9,6 +9,8 @@ use Orangesix\Repository\DefaultRepository;
 
 trait RepositoryFilter
 {
+    use RepositoryFilterSQLInjection;
+
     /**
      * Converte o objeto de request em array
      * @param Request|array|null $request
@@ -22,7 +24,16 @@ trait RepositoryFilter
 
         $filtered = collect(is_array($request) ? $request : $request->all());
         $filtered = $filtered->filter(function ($item) {
-            return !empty($item);
+            if ($item === null) {
+                return false;
+            }
+            if (is_string($item)) {
+                return trim($item) !== '';
+            }
+            if (is_array($item)) {
+                return !empty($item);
+            }
+            return true;
         })->toArray();
 
         unset(
@@ -59,7 +70,13 @@ trait RepositoryFilter
     public function getQueryFilterOrder(array $filtered): string
     {
         if (isset($filtered['order'])) {
-            return "{$filtered['order']['field']} {$filtered['order']['value']}";
+            $field = $filtered['order']['field'] ?? '';
+            $direction = $filtered['order']['value'] ?? 'asc';
+
+            if (!$this->filterIsSafeSqlIdentifier($field)) {
+                abort(400, 'Campo de ordenação inválido.');
+            }
+            return "{$field} {$this->filterNormalizeOrderDirection($direction)}";
         }
         return '';
     }
@@ -68,6 +85,7 @@ trait RepositoryFilter
      * Realiza a montagem da query de pesquisa dos módulos com paginação
      * @param Builder|EloquentBuilder $query
      * @param array $filter
+     * @param string|array $orderBy
      * @return void
      */
     public function getQueryFilter(Builder|EloquentBuilder &$query, array $filter, string|array $orderBy = 'id'): void
@@ -79,27 +97,25 @@ trait RepositoryFilter
                     $query->where($field, '=', $value);
                 }
             }
-
             if (is_int($value) && $field != 'id') {
                 $query->where($field, '=', $value);
             }
-
             if (is_array($value) && $field != 'query' && $field !== 'order') {
                 $query->whereIn($field, $value);
             }
-
             if ($field == 'id') {
                 $query->where('id', 'LIKE', "%{$value}%");
             }
-
             if (is_array($value) && $field == 'query') {
                 foreach ($value as $qy) {
+                    if (!$this->filterIsSafeRawQuery($qy)) {
+                        abort(400, 'Filtro query inválido.');
+                    }
                     $query->whereRaw($qy);
                 }
             }
         }
-
-        if (!isset($filter['order']) || empty($filter['order'])) {
+        if (empty($filter['order'])) {
             if (is_string($orderBy)) {
                 $query->orderBy($orderBy);
             } else {
@@ -107,8 +123,35 @@ trait RepositoryFilter
                     $query->orderBy($key, $type);
                 }
             }
-        } else {
-            $query->orderByRaw($filter['order']);
         }
+        if (!empty($filter['order'])) {
+            $this->filterApplyOrder($query, $filter['order']);
+        }
+    }
+
+    /**
+     * Aplica ordenação validada sem usar orderByRaw.
+     *
+     * @param Builder|EloquentBuilder $query
+     * @param string|array $order
+     * @return void
+     */
+    private function filterApplyOrder(Builder|EloquentBuilder $query, string|array $order): void
+    {
+        if (is_array($order)) {
+            $field = $order['field'] ?? '';
+            $direction = $order['value'] ?? 'asc';
+        } else {
+            $parts = preg_split('/\s+/', trim($order));
+            if (count($parts) > 2) {
+                abort(400, 'Ordenação inválida.');
+            }
+            $field = $parts[0] ?? '';
+            $direction = $parts[1] ?? 'asc';
+        }
+        if (!$this->filterIsSafeSqlIdentifier($field)) {
+            abort(400, 'Campo de ordenação inválido.');
+        }
+        $query->orderBy($field, $this->filterNormalizeOrderDirection($direction));
     }
 }

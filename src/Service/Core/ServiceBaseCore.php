@@ -3,6 +3,7 @@
 namespace Orangesix\Service\Core;
 
 use Illuminate\Database\Eloquent\Model;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 trait ServiceBaseCore
 {
@@ -47,5 +48,26 @@ trait ServiceBaseCore
         }
 
         return self::$crudHooks[$this][$name] ?? null;
+    }
+
+    /**
+     * Trata exceções comuns dos fluxos de CRUD.
+     *
+     * @param \Exception $exception
+     * @return never
+     * @throws \Exception|HttpExceptionInterface
+     */
+    private function abortException(\Exception $exception): never
+    {
+        if ($exception instanceof HttpExceptionInterface) {
+            throw $exception;
+        }
+        if ($exception->getCode() == '23000') {
+            abort(400, "Este registro está sendo utilizado em outro módulo do sistema.
+                <p class='mt-2'><a class='j_message_detail d-flex w-100 fs-7 text-white fw-semibold' href='#'><i class='bi bi-eye me-1'></i>Veja detalhe:</a></p>
+                <p id='j_message_detail_view' class='fs-7 mt-2' style='display: none'>({$exception->getMessage()})</p>
+           ");
+        }
+        abort(500, $exception->getMessage());
     }
 }

@@ -3,7 +3,6 @@
 namespace Orangesix\Service;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\Request;
 use Orangesix\Repository\DefaultRepository;
 use Orangesix\Repository\Contract\Repository;
 
@@ -11,7 +10,6 @@ use Orangesix\Repository\Contract\Repository;
  * Service - DEFAULT
  *
  * @property DefaultRepository | Repository $repository
- * @method findAll(?Request $request = null, string $exec = 'paginate' | 'get')
  */
 class DefaultService extends ServiceBase
 {

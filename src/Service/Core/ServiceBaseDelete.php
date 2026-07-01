@@ -2,6 +2,7 @@
 
 namespace Orangesix\Service\Core;
 
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Orangesix\Service\ServiceBase;
@@ -17,10 +18,9 @@ trait ServiceBaseDelete
      */
     public function delete(array|Request $request): void
     {
+        $id = $this->resolveDelete($request);
         try {
             DB::beginTransaction();
-
-            $id = is_array($request) ? $request['id'] : $request->id;
 
             $beforeDelete = $this->getHook('beforeDelete');
             if ($beforeDelete instanceof \Closure) {
@@ -37,13 +37,10 @@ trait ServiceBaseDelete
             DB::commit();
         } catch (\Exception $exception) {
             DB::rollBack();
-            if ($exception->getCode() == '23000') {
-                abort(400, "Este registro está sendo utilizado em outro módulo do sistema.
-                    <p class='mt-2'><a class='j_message_detail d-flex w-100 fs-7 text-white fw-semibold' href='#'><i class='bi bi-eye me-1'></i>Veja detalhe:</a></p>
-                    <p id='j_message_detail_view' class='fs-7 mt-2' style='display: none'>({$exception->getMessage()})</p>
-               ");
+            if ($exception instanceof ModelNotFoundException) {
+                abort(404, 'Registro não encontrado para exclusão.');
             }
-            abort(500, $exception->getMessage());
+            $this->abortException($exception);
         }
     }
 
@@ -69,5 +66,20 @@ trait ServiceBaseDelete
     {
         $this->setHook('afterDelete', $closure);
         return $this;
+    }
+
+    /**
+     * Resolve o id usado na exclusão e falha com mensagem clara quando ele não existir.
+     *
+     * @param array|Request $request
+     * @return int
+     */
+    private function resolveDelete(array|Request $request): int
+    {
+        $id = is_array($request) ? ($request['id'] ?? null) : $request->input('id');
+        if (empty($id)) {
+            abort(400, 'O campo id é obrigatório para exclusão.');
+        }
+        return (int)$id;
     }
 }

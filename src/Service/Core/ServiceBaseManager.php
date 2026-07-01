@@ -17,13 +17,7 @@ trait ServiceBaseManager
      */
     public function manager(array|Request $request): mixed
     {
-        if (is_array($request)) {
-            $data = $request;
-        } elseif (method_exists($request, 'validated')) {
-            $data = $request->validated();
-        } else {
-            $data = $request->all();
-        }
+        $data = $this->resolveManagerData($request);
 
         try {
             DB::beginTransaction();
@@ -44,13 +38,7 @@ trait ServiceBaseManager
             return $id;
         } catch (\Exception $exception) {
             DB::rollBack();
-            if ($exception->getCode() == '23000') {
-                abort(400, "Este registro está sendo utilizado em outro módulo do sistema.
-                    <p class='mt-2'><a class='j_message_detail d-flex w-100 fs-7 text-white fw-semibold' href='#'><i class='bi bi-eye me-1'></i>Veja detalhe:</a></p>
-                    <p id='j_message_detail_view' class='fs-7 mt-2' style='display: none'>({$exception->getMessage()})</p>
-               ");
-            }
-            abort(500, $exception->getMessage());
+            return $this->abortException($exception);
         }
     }
 
@@ -76,5 +64,22 @@ trait ServiceBaseManager
     {
         $this->setHook('afterManager', $closure);
         return $this;
+    }
+
+    /**
+     * Resolve os dados usados pelo manager a partir de array, FormRequest ou Request comum.
+     *
+     * @param array|Request $request
+     * @return array
+     */
+    private function resolveManagerData(array|Request $request): array
+    {
+        if (is_array($request)) {
+            return $request;
+        }
+        if (method_exists($request, 'validated')) {
+            return $request->validated();
+        }
+        return $request->all();
     }
 }
