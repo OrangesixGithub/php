@@ -22,17 +22,11 @@ trait ServiceBaseDelete
         try {
             DB::beginTransaction();
 
-            $beforeDelete = $this->getHook('beforeDelete');
-            if ($beforeDelete instanceof \Closure) {
-                $beforeDelete($request);
-            }
+            $this->runHook(name: 'beforeDelete', arguments: $request);
 
             $this->repository->remove($id);
 
-            $afterDelete = $this->getHook('afterDelete');
-            if ($afterDelete instanceof \Closure) {
-                $afterDelete($request);
-            }
+            $this->runHook(name: 'afterDelete', arguments: $request);
 
             DB::commit();
         } catch (\Exception $exception) {

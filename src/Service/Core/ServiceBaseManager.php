@@ -22,17 +22,11 @@ trait ServiceBaseManager
         try {
             DB::beginTransaction();
 
-            $beforeManager = $this->getHook('beforeManager');
-            if ($beforeManager instanceof \Closure) {
-                $beforeManager($data);
-            }
+            $this->runHook(name: 'beforeManager', arguments: $data);
 
             $id = $this->repository->save($data);
 
-            $afterManager = $this->getHook('afterManager');
-            if ($afterManager instanceof \Closure) {
-                $afterManager(array_merge($data, ['id' => $id]));
-            }
+            $this->runHook(name: 'afterManager', arguments: array_merge($data, ['id' => $id]));
 
             DB::commit();
             return $id;

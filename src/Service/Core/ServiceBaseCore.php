@@ -3,6 +3,7 @@
 namespace Orangesix\Service\Core;
 
 use Illuminate\Database\Eloquent\Model;
+use Orangesix\Core\AutoClassResolver;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 trait ServiceBaseCore
@@ -48,6 +49,34 @@ trait ServiceBaseCore
         }
 
         return self::$crudHooks[$this][$name] ?? null;
+    }
+
+    /**
+     * Executa o hook registrado manualmente e a rule encontrada.
+     *
+     * @param string $name Nome interno do hook.
+     * @param mixed ...$arguments Argumentos originais do hook.
+     * @return void
+     */
+    private function runHook(string $name, mixed ...$arguments): void
+    {
+        $arguments = array_values($arguments);
+
+        $hook = $this->getHook($name);
+        if ($hook instanceof \Closure) {
+            $hook(...$arguments);
+        }
+
+        $rule = AutoClassResolver::findServiceRule(AutoClassResolver::normalize($this->getModel()::class, 'Model'), $name);
+        if (empty($rule)) {
+            return;
+        }
+
+        $instance = app()->make($rule);
+        if (!is_callable($instance)) {
+            abort(500, "A rule {$rule} precisa implementar o método __invoke.");
+        }
+        $instance(...array_merge($arguments, [$this]));
     }
 
     /**

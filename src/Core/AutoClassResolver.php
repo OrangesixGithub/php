@@ -49,6 +49,18 @@ class AutoClassResolver
     private static function findClass(string $class, string $suffix, array $paths): ?string
     {
         $className = self::normalize(class: $class, suffix: $suffix) . $suffix;
+        return self::findNamedClass($className, $paths);
+    }
+
+    /**
+     * Procura uma classe pelo nome exato em uma lista de diretórios
+     *
+     * @param string $className Nome exato da classe.
+     * @param array $paths DiretÃ³rios onde a classe deve ser procurada.
+     * @return string|null Classe completa encontrada.
+     */
+    private static function findNamedClass(string $className, array $paths): ?string
+    {
         foreach ($paths as $path) {
             $instance = getClass($path, $className);
             if (!empty($instance)) {
@@ -70,6 +82,25 @@ class AutoClassResolver
     public static function findService(string $class): ?string
     {
         return self::findClass(class: $class, suffix: 'Service', paths: self::paths(config: 'orangesix.service_path', default: [
+            app_path('Services'),
+            app_path('Service'),
+        ]));
+    }
+
+    /**
+     * Procura o `Rule` seguindo os padrões de projeto.
+     * Exemplo: PessoaBeforeDeleteRule.
+     *
+     * @param string $class Nome base do recurso.
+     * @param string $hook Nome do hook, como beforeDelete ou afterManager.
+     * @return string|null Classe completa da rule encontrada.
+     */
+    public static function findServiceRule(string $class, string $hook): ?string
+    {
+        $className = self::normalize(class: $class, suffix: ['Service', 'Repository', 'Model'])
+            . Str::studly($hook)
+            . 'Rule';
+        return self::findNamedClass($className, self::paths(config: 'orangesix.service_path', default: [
             app_path('Services'),
             app_path('Service'),
         ]));
