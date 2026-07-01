@@ -11,6 +11,9 @@ trait RepositoryDataBase
      */
     public function getModel(): Model
     {
+        if (!$this->model instanceof Model) {
+            abort(400, 'Model nao definido no repository. Use a convencao {Nome}Model ou crie um Repository especifico com model valido.');
+        }
         return $this->model;
     }
 

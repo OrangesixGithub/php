@@ -3,6 +3,7 @@
 namespace Orangesix\Models\Core;
 
 use Illuminate\Contracts\Container\BindingResolutionException;
+use Orangesix\Core\AutoClassResolver;
 
 trait ModelAutoInstance
 {
@@ -13,23 +14,7 @@ trait ModelAutoInstance
      */
     private function instanceAutoModel(string $class): mixed
     {
-        $model = str_replace('model', '', $class) . 'Model';
-        $paths = empty(config('orangesix.model_path')) ? [
-            app_path('Model'),
-            app_path('Models'),
-        ] : config('orangesix.model_path');
-        foreach ($paths as $modelPath) {
-            $instance = getClass($modelPath, $model);
-            if (!empty($instance)) {
-                break;
-            }
-        }
-
-        if (!empty($instance)) {
-            $class = $instance['namespace'] . '\\' . $instance['class'];
-            return app()->make($class);
-        }
-        return null;
+        return AutoClassResolver::makeModel(AutoClassResolver::normalize($class, 'Model'));
     }
 
     /**
@@ -40,8 +25,7 @@ trait ModelAutoInstance
     private function getClassModelAuto(): mixed
     {
         $reflection = new \ReflectionClass($this);
-        $modelAuto = str_replace('Repository', '', class_basename($reflection->getName()));
-
+        $modelAuto = AutoClassResolver::normalize($reflection->getName(), 'Repository');
         return $this->instanceAutoModel($modelAuto);
     }
 }

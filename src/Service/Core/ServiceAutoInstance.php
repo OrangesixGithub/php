@@ -2,6 +2,9 @@
 
 namespace Orangesix\Service\Core;
 
+use Orangesix\Core\AutoClassResolver;
+use Orangesix\Service\DefaultService;
+
 trait ServiceAutoInstance
 {
     /**
@@ -13,29 +16,15 @@ trait ServiceAutoInstance
     private function instanceAutoService(string $class): mixed
     {
         $namespace = $this->getClassProperty($class);
-        if ($namespace && str_contains($namespace, 'service')) {
+        if ($namespace && $namespace !== DefaultService::class && str_contains(strtolower($namespace), 'service')) {
             return app()->make($namespace);
         }
 
-        $service = str_replace('service', '', $class) . 'Service';
-        $paths = empty(config('orangesix.service_path')) ? [
-            app_path('Service'),
-            app_path('Services'),
-        ] : config('orangesix.service_path');
-        foreach ($paths as $servicePath) {
-            $instance = getClass($servicePath, $service);
-            if (!empty($instance)) {
-                break;
-            }
+        $classResolver = AutoClassResolver::normalize($class, 'Service');
+        if (empty($classResolver) || strtolower($class) === 'service') {
+            $classResolver = AutoClassResolver::normalize(static::class, ['Controller', 'Service', 'Repository']);
         }
-
-        if (!empty($instance)) {
-            $class = $instance['namespace'] . '\\' . $instance['class'];
-            return app()->make($class);
-        } else {
-            $classDefault = 'Orangesix\\Service\\DefaultService';
-            return app()->make($classDefault);
-        }
+        return AutoClassResolver::makeService($classResolver);
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace Orangesix\Repository\Core;
 
 use Illuminate\Contracts\Container\BindingResolutionException;
+use Orangesix\Core\AutoClassResolver;
 
 trait RepositoryAutoInstance
 {
@@ -14,23 +15,7 @@ trait RepositoryAutoInstance
      */
     private function instanceAutoRepository(string $class): mixed
     {
-        $repository = str_replace('repository', '', $class) . 'Repository';
-        $paths = empty(config('orangesix.repository_path')) ? [
-            app_path('Repository'),
-            app_path('Repositories'),
-        ] : config('orangesix.repository_path');
-        foreach ($paths as $repositoryPath) {
-            $instance = getClass($repositoryPath, $repository);
-            if (!empty($instance)) {
-                break;
-            }
-        }
-
-        if (!empty($instance)) {
-            $class = $instance['namespace'] . '\\' . $instance['class'];
-            return app()->make($class);
-        }
-        return null;
+        return AutoClassResolver::makeRepository(AutoClassResolver::normalize($class, 'Repository'));
     }
 
     /**
@@ -41,7 +26,7 @@ trait RepositoryAutoInstance
     private function getClassRepositoryAuto(): mixed
     {
         $reflection = new \ReflectionClass($this);
-        $repositoryAuto = str_replace('Service', '', class_basename($reflection->getName()));
+        $repositoryAuto = AutoClassResolver::normalize($reflection->getName(), 'Service');
 
         return $this->instanceAutoRepository($repositoryAuto);
     }

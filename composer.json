@@ -23,8 +23,8 @@
   },
   "autoload": {
     "psr-4": {
-      "Orangesix\\": "src",
-      "Tests\\": "tests"
+      "Orangesix\\": "src/",
+      "Tests\\": "tests/"
     },
     "files": [
       "./src/Function/all/class.php",

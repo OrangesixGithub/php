@@ -2,7 +2,7 @@
 
 namespace Orangesix\Service;
 
-use Illuminate\Contracts\Container\BindingResolutionException;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Orangesix\Repository\DefaultRepository;
 use Orangesix\Repository\Contract\Repository;
@@ -15,54 +15,20 @@ use Orangesix\Repository\Contract\Repository;
  */
 class DefaultService extends ServiceBase
 {
-    public function __construct(DefaultRepository $repository)
+    public function __construct(?Repository $repository = null)
     {
+        if (empty($repository)) {
+            throw new \LogicException('DefaultService é uma classe interna do pacote e não deve ser instanciado diretamente.');
+        }
         parent::__construct($repository);
     }
 
     /**
-     * @param string $model
-     * @return $this
-     * @throws BindingResolutionException
+     * Retorna o model vinculado ao service
+     * @return Model
      */
-    public function setModel(string $model): DefaultService
+    public function getModel(): Model
     {
-        $this->repository->setModel(app()->make($model));
-
-        return $this;
-    }
-
-    /**
-     * @param array $fields
-     * @return self
-     */
-    public function setField(array $fields): DefaultService
-    {
-        $this->repository->setField($fields);
-
-        return $this;
-    }
-
-    /**
-     * @param array $queryRaw
-     * @return self
-     */
-    public function setQuery(array $queryRaw): DefaultService
-    {
-        $this->repository->setQuery($queryRaw);
-
-        return $this;
-    }
-
-    /**
-     * @param string $name
-     * @param callable $callback
-     * @return DefaultService
-     */
-    public function setFilter(string $name, callable $callback): DefaultService
-    {
-        $this->repository->setFilter($name, $callback);
-
-        return $this;
+        return $this->repository->getModel();
     }
 }

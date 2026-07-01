@@ -3,55 +3,82 @@
 namespace Orangesix\Service;
 
 use Illuminate\Contracts\Container\BindingResolutionException;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Orangesix\Repository\Contract\Repository;
 use Orangesix\Repository\Core\RepositoryAutoInstance;
 use Orangesix\Repository\RepositoryBase;
 use Orangesix\Service\Contract\Service;
 use Orangesix\Service\Core\ServiceAutoInstance;
-use Orangesix\Service\Core\ServiceDataBaseEvent;
+use Orangesix\Service\Core\ServiceBaseCore;
+use Orangesix\Service\Core\ServiceBaseDelete;
+use Orangesix\Service\Core\ServiceBaseManager;
 use Orangesix\Service\Response\ServiceResponse;
 
 /**
+ * Service Base
  * @property RepositoryBase $repository
  */
 abstract class ServiceBase implements Service
 {
+    use ServiceBaseCore;
+    use ServiceBaseDelete;
+    use ServiceBaseManager;
     use ServiceAutoInstance;
-    use ServiceDataBaseEvent;
     use RepositoryAutoInstance;
 
     /** @var ServiceResponse */
     protected ServiceResponse $response;
 
     /**
-     * @throws \Illuminate\Contracts\Container\BindingResolutionException
+     * Inicializa o service e garante que ele sempre tenha um repository.
+     *
+     * O container injeta o `ServiceResponse` (helper de respostas padronizadas).
+     * Se nenhum repository for informado, o pacote resolve automaticamente o
+     * repository correspondente pela convenção de nomes ({Nome}Service =>
+     * {Nome}Repository) através de `getClassRepositoryAuto()`.
+     *
+     * @param Repository|null $repository Repository explícito; quando nulo, é resolvido por convenção.
+     * @throws BindingResolutionException Quando o container não consegue resolver o ServiceResponse ou o repository.
      */
     public function __construct(
-        protected ?Repository $repository = null,
-        private array         $validated = []
+        protected ?Repository $repository = null
     ) {
         $this->response = app()->make(ServiceResponse::class);
         $this->repository = empty($this->repository) ? $this->getClassRepositoryAuto() : $this->repository;
     }
 
     /**
-     * @param string $name
-     * @return mixed
-     * @throws BindingResolutionException
+     * Resolve dependências acessadas como propriedade mágica (ex.: $this->produtoService).
+     *
+     * Se o nome da propriedade começar com "repository", retorna a instância do
+     * repository correspondente; caso contrário, resolve um service pela
+     * convenção de nomes. Permite acessar outros services/repositories sob
+     * demanda, sem injeção manual no construtor.
+     *
+     * @param string $name Nome da propriedade acessada (ex.: "clienteRepository", "pedidoService").
+     * @return mixed Instância do service ou repository resolvido.
+     * @throws BindingResolutionException Quando o container não consegue instanciar a classe resolvida.
      */
     public function __get(string $name)
     {
+        if (str_starts_with(strtolower($name), 'repository')) {
+            return $this->instanceAutoRepository($name);
+        }
         return $this->instanceAutoService($name);
     }
 
     /**
-     * @param string $name
-     * @param array $arguments
-     * @return mixed
-     * @throws \Exception
+     * Delega ao repository métodos não declarados no service (proxy de instância).
+     *
+     * Quando um metodo chamado não existe no service, mas existe no repository
+     * vinculado, a chamada é encaminhada para ele. Os argumentos são preenchidos
+     * com `null` até atingir o número de parâmetros do metodo de destino, evitando
+     * erro por argumento ausente. Se o metodo também não existir no repository,
+     * lança exceção.
+     *
+     * @param string $name Nome do método chamado.
+     * @param array $arguments Argumentos passados na chamada.
+     * @return mixed Retorno do método correspondente no repository.
+     * @throws \BadMethodCallException Quando o método não existe nem no service nem no repository.
      */
     public function __call(string $name, array $arguments): mixed
     {
@@ -60,19 +87,37 @@ abstract class ServiceBase implements Service
             $parameters = array_pad($arguments, $reflection->getNumberOfParameters(), null);
 
             return $this->repository->$name(...$parameters);
-        } else {
-            throw new \BadMethodCallException('Método não existe no service ou repository.', 500);
         }
+        $model = $this->getModel();
+        if (method_exists($model, $name)) {
+            return forward_static_call_array([get_class($model), $name], $arguments);
+        }
+        throw new \BadMethodCallException('Método não existe no service, repository ou model.', 500);
     }
 
     /**
-     * @param string $name
-     * @param array $arguments
-     * @return mixed
-     * @throws BindingResolutionException
+     * Delega chamadas estáticas para o repository ou para o model (proxy estático).
+     *
+     * Instancia o service via container e tenta, nesta ordem:
+     *  1. encaminhar para um metodo estático de mesmo nome no repository;
+     *  2. encaminhar para um metodo (estático/scope) de mesmo nome no model.
+     * Útil para expor, de forma estática, scopes e helpers do model/repository
+     * sem precisar instanciar o service manualmente.
+     *
+     * @param string $name Nome do metodo estático chamado.
+     * @param array $arguments Argumentos passados na chamada.
+     * @return mixed Retorno do metodo correspondente no repository ou no model.
+     * @throws BindingResolutionException Quando o container não consegue instanciar o service.
+     * @throws \BadMethodCallException Quando o metodo não existe no repository nem no model.
      */
     public static function __callStatic(string $name, array $arguments): mixed
     {
+        if (static::class === DefaultService::class) {
+            throw new \LogicException(
+                'DefaultService não pode receber chamadas estáticas. Use a chamada por instância, como $this->service->'
+                . $name . '(), ou crie um service específico.'
+            );
+        }
         $service = app()->make(static::class);
         if (method_exists($service->repository, $name)) {
             $reflection = new \ReflectionMethod($service->repository, $name);
@@ -85,101 +130,5 @@ abstract class ServiceBase implements Service
             return forward_static_call_array([$model, $name], $arguments);
         }
         throw new \BadMethodCallException('Método não existe no service ou repository.', 500);
-    }
-
-    /**
-     * @return Model
-     */
-    public function getModel(): Model
-    {
-        return $this->repository->getModel();
-    }
-
-    /**
-     * @param array|Request $request
-     * @return mixed
-     */
-    public function manager(array|Request $request): mixed
-    {
-        if (is_array($request)) {
-            $data = $request;
-        } elseif (method_exists($request, 'validated')) {
-            $data = $request->validated();
-        } else {
-            if (!empty($this->validated)) {
-                $data = $request->validate($this->validated);
-            } else {
-                $data = $request->all();
-            }
-        }
-        try {
-            DB::beginTransaction();
-
-            if ($this->beforeManager instanceof \Closure) {
-                ($this->beforeManager)($data);
-            }
-
-            $id = $this->repository->save($data);
-
-            if ($this->afterManager instanceof \Closure) {
-                ($this->afterManager)(array_merge($data, ['id' => $id]));
-            }
-
-            DB::commit();
-            return $id;
-        } catch (\Exception $exception) {
-            DB::rollBack();
-            if ($exception->getCode() == '23000') {
-                abort(400, "Este registro está sendo utilizado em outro módulo do sistema.
-                    <p class='mt-2'><a class='j_message_detail d-flex w-100 fs-7 text-white fw-semibold' href='#'><i class='bi bi-eye me-1'></i>Veja detalhe:</a></p>
-                    <p id='j_message_detail_view' class='fs-7 mt-2' style='display: none'>({$exception->getMessage()})</p>
-               ");
-            }
-            abort(500, $exception->getMessage());
-        }
-    }
-
-    /**
-     * @param array|Request $request
-     * @return void
-     */
-    public function delete(array|Request $request): void
-    {
-        try {
-            DB::beginTransaction();
-
-            $id = is_array($request) ? $request['id'] : $request->id;
-
-            if ($this->beforeDelete instanceof \Closure) {
-                ($this->beforeDelete)($request);
-            }
-
-            $this->repository->remove($id);
-
-            if ($this->afterDelete instanceof \Closure) {
-                ($this->afterDelete)($request);
-            }
-
-            DB::commit();
-        } catch (\Exception $exception) {
-            DB::rollBack();
-            if ($exception->getCode() == '23000') {
-                abort(400, "Este registro está sendo utilizado em outro módulo do sistema.
-                    <p class='mt-2'><a class='j_message_detail d-flex w-100 fs-7 text-white fw-semibold' href='#'><i class='bi bi-eye me-1'></i>Veja detalhe:</a></p>
-                    <p id='j_message_detail_view' class='fs-7 mt-2' style='display: none'>({$exception->getMessage()})</p>
-               ");
-            }
-            abort(500, $exception->getMessage());
-        }
-    }
-
-    /**
-     * @param array $validated
-     * @return $this
-     */
-    public function setValidated(array $validated): self
-    {
-        $this->validated = $validated;
-        return $this;
     }
 }

@@ -2,8 +2,8 @@
 
 namespace Orangesix\Service\Contract;
 
-use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
 
 interface Service
 {
@@ -23,11 +23,4 @@ interface Service
      * @return void
      */
     public function delete(array|Request $request): void;
-
-    /**
-     * @param array $validation
-     * @param array $data
-     * @return self
-     */
-    public function setValidated(array $validated): self;
 }
