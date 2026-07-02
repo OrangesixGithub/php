@@ -24,7 +24,7 @@ trait ServiceBaseDelete
 
             $this->runHook(name: 'beforeDelete', arguments: $request);
 
-            $this->repository->remove($id);
+            $this->getRepository()->remove($id);
 
             $this->runHook(name: 'afterDelete', arguments: $request);
 

@@ -24,7 +24,7 @@ trait ServiceBaseManager
 
             $this->runHook(name: 'beforeManager', arguments: $data);
 
-            $id = $this->repository->save($data);
+            $id = $this->getRepository()->save($data);
 
             $this->runHook(name: 'afterManager', arguments: array_merge($data, ['id' => $id]));
 

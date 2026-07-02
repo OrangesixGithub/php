@@ -4,6 +4,7 @@ namespace Orangesix\Service\Core;
 
 use Illuminate\Database\Eloquent\Model;
 use Orangesix\Core\AutoClassResolver;
+use Orangesix\Repository\Contract\Repository;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 trait ServiceBaseCore
@@ -18,7 +19,20 @@ trait ServiceBaseCore
      */
     public function getModel(): Model
     {
-        return $this->repository->getModel();
+        return $this->getRepository()->getModel();
+    }
+
+    /**
+     * Retorna o repository vinculado ao service.
+     *
+     * @return Repository
+     */
+    protected function getRepository(): Repository
+    {
+        if ($this->repository === null) {
+            abort(400, 'Repository não definido no service. A instância automática do repository foi desativada ou nenhum repository foi informado.');
+        }
+        return $this->repository;
     }
 
     /**

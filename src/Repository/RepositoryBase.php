@@ -4,6 +4,7 @@ namespace Orangesix\Repository;
 
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Database\Eloquent\Model;
+use Orangesix\Core\AutoInstanceConfig;
 use Orangesix\Models\Core\ModelAutoInstance;
 use Orangesix\Repository\Contract\Repository;
 use Orangesix\Repository\Core\RepositoryBaseCore;
@@ -27,7 +28,9 @@ abstract class RepositoryBase implements Repository
     public function __construct(
         protected ?Model $model = null
     ) {
-        $this->model = empty($this->model) ? $this->getClassModelAuto() : $this->model;
+        $this->model = empty($this->model) && !AutoInstanceConfig::model($this)
+            ? $this->getClassModelAuto()
+            : $this->model;
     }
 
     /**

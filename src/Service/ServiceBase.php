@@ -3,6 +3,7 @@
 namespace Orangesix\Service;
 
 use Illuminate\Contracts\Container\BindingResolutionException;
+use Orangesix\Core\AutoInstanceConfig;
 use Orangesix\Repository\Contract\Repository;
 use Orangesix\Repository\Core\RepositoryAutoInstance;
 use Orangesix\Repository\RepositoryBase;
@@ -43,7 +44,9 @@ abstract class ServiceBase implements Service
         protected ?Repository $repository = null
     ) {
         $this->response = app()->make(ServiceResponse::class);
-        $this->repository = empty($this->repository) ? $this->getClassRepositoryAuto() : $this->repository;
+        $this->repository = empty($this->repository) && !AutoInstanceConfig::repository($this)
+            ? $this->getClassRepositoryAuto()
+            : $this->repository;
     }
 
     /**
@@ -82,11 +85,12 @@ abstract class ServiceBase implements Service
      */
     public function __call(string $name, array $arguments): mixed
     {
-        if (method_exists($this->repository, $name)) {
-            $reflection = new \ReflectionMethod($this->repository, $name);
+        if ($this->repository !== null && method_exists($this->repository, $name)) {
+            $repository = $this->getRepository();
+            $reflection = new \ReflectionMethod($repository, $name);
             $parameters = array_pad($arguments, $reflection->getNumberOfParameters(), null);
 
-            return $this->repository->$name(...$parameters);
+            return $repository->$name(...$parameters);
         }
         $model = $this->getModel();
         if (method_exists($model, $name)) {
@@ -119,10 +123,11 @@ abstract class ServiceBase implements Service
             );
         }
         $service = app()->make(static::class);
-        if (method_exists($service->repository, $name)) {
-            $reflection = new \ReflectionMethod($service->repository, $name);
+        $repository = $service->getRepository();
+        if (method_exists($repository, $name)) {
+            $reflection = new \ReflectionMethod($repository, $name);
             if ($reflection->isStatic()) {
-                return forward_static_call_array([get_class($service->repository), $name], $arguments);
+                return forward_static_call_array([get_class($repository), $name], $arguments);
             }
         }
         $model = $service->getModel();
